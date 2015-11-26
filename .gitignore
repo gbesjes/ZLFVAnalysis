@@ -1,2 +1,8 @@
 RootCoreBin
+.RootCoreBin
 extra_packages.rc
+rcSetup.*
+JetUncertainties/
+MuonEfficiencyCorrections/
+SUSYTools/
+cafe/
