@@ -1,7 +1,15 @@
+README - version 26/11/2015
+---------------------------
 Setup AnalysisSUSY 2.3.36a.
 
 Can't get AnalysisSUSY because you're on a Mac or because you want to hack a package? Use AnalysisBase 2.3.36 and run this:
-
-diff -u /cvmfs/atlas.cern.ch/repo/sw/ASG/AnalysisBase/2.3.36/packages.rc /cvmfs/atlas.cern.ch/repo/sw/ASG/AnalysisSUSY/2.3.36a/packages.rc | grep ^+ | grep -v ++ | sed s/\+// >> extra_packages.rc
+$ diff -u /cvmfs/atlas.cern.ch/repo/sw/ASG/AnalysisBase/2.3.36/packages.rc /cvmfs/atlas.cern.ch/repo/sw/ASG/AnalysisSUSY/2.3.36a/packages.rc | grep ^+ | grep -v ++ | sed s/\+// >> extra_packages.rc
 
 It will make a list of all the tags that are different between AnalysisBase and AnalysisSUSY and add them to an extra_packages.rc file. 
+
+Missing a private build? Put this in $HOME/.rcSetup.conf (with the correct locations):
+
+asgConf={ 'private': { 'asgType': 'private',
+               'location': '/Users/gbesjes/bin/AnalysisBase',
+               'pattern': '*.*.*'}}
+
