@@ -1,4 +1,5 @@
-#include <ZLFVAnalysis/ZLFVEventSelector.h>
+#include <ZLFVAnalysis/Bookkeeper.h>
+#include <ZLFVAnalysis/ObjectBuilder.h>
 
 #ifdef __CINT__
 
@@ -10,5 +11,6 @@
 #endif
 
 #ifdef __CINT__
-#pragma link C++ class ZLFVEventSelector+;
+#pragma link C++ class Bookkeeper+;
+#pragma link C++ class ObjectBuilder+;
 #endif
