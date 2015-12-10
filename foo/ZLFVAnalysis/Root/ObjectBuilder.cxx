@@ -89,6 +89,7 @@ ObjectBuilder::~ObjectBuilder() {
 }
 
 void  ObjectBuilder::inputFileOpened(TFile *file) {
+    std::cout << "Opened input file " << file->GetName() << std::endl;
     // SUSYTools initialisation must be delayed until we have a TEvent associated
     // with a file due to xAODConfigTool 
     if ( !m_SUSYObjTool ) {
@@ -105,7 +106,7 @@ void ObjectBuilder::initSUSYTools() {
     ST::SettingDataSource datasource = m_isData ? ST::Data : (m_isAtlfast ? ST::AtlfastII : ST::FullSim);
     m_SUSYObjTool->setProperty("DataSource", datasource).ignore();
     m_SUSYObjTool->setProperty("METTauTerm", "").ignore();
-    m_SUSYObjTool->setProperty("Is8TeV", false).ignore();
+    //m_SUSYObjTool->setProperty("Is8TeV", false).ignore(); //TODO
 
     // Check if we have a valid jet type
     xAOD::JetInput::Type jetType = Utils::JetTypeFromString(m_jetContainerKey);
@@ -114,8 +115,8 @@ void ObjectBuilder::initSUSYTools() {
     }
     m_SUSYObjTool->setProperty("JetInputType", jetType).ignore();
     m_SUSYObjTool->setProperty("JESNuisanceParameterSet", m_JESNuisanceParameterSet).ignore();
-    m_SUSYObjTool->setProperty("DoJetAreaCalib", true).ignore();
-    m_SUSYObjTool->setProperty("DoJetGSCCalib", true).ignore();
+    //m_SUSYObjTool->setProperty("DoJetAreaCalib", true).ignore(); //TODO
+    //m_SUSYObjTool->setProperty("DoJetGSCCalib", true).ignore(); //TODO
 
     /* if ( m_derivationTag == p1872 ) {
        m_SUSYObjTool->setProperty("METInputCont","MET_RefFinalFix").ignore();
@@ -252,6 +253,8 @@ void ObjectBuilder::initializeNoSystematics() {
 
 bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
 
+    std::cout << "HELLO" << std::endl;
+
     // for muon trigger SF
     if ( ! m_SUSYObjTool->setRunNumber(267639).isSuccess() ) {
         throw std::runtime_error("Could not set reference run number in SUSYTools !");
@@ -374,7 +377,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYMuons"+m_suffix+tag+"Aux.");
             }
         }
-        //out() <<  "Muons"+m_suffix+tag+" muons " << std::endl;
+        out() <<  "Muons"+m_suffix+tag+" muons " << std::endl;
         for ( const auto& mu : *muons ) {
             // declare calo and forward muons non baseline so they don't get used in MET
             if ( mu->muonType() != xAOD::Muon::Combined &&
@@ -382,14 +385,12 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                     mu->muonType() != xAOD::Muon::SegmentTagged ) {
                 mu->auxdecor<char>("baseline") = 0;
             }
-            /*
                out() << " Muon " << mu->pt() << " " << mu->eta()
                << " " << mu->phi() 
                << " bad " <<  (int) mu->auxdata<char>("bad") 
                << " baseline " <<  (int) mu->auxdata<char>("baseline") 
                << " signal " <<  (int) mu->auxdata<char>("signal") 
                <<std::endl;
-             */
         }
 
 
@@ -407,21 +408,20 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYElectrons"+m_suffix+tag+"Aux.");
             }
         }
-        //out() <<  "Electrons"+m_suffix+tag+" electrons " << std::endl;
+        out() <<  "Electrons"+m_suffix+tag+" electrons " << std::endl;
         for ( const auto& el : *electrons ) {
-            /*
                out() << " Electron " << el->pt() << " " << el->eta()
                << " " << el->phi() 
                << " baseline " <<  (int) el->auxdata<char>("baseline") 
                << " signal " <<  (int) el->auxdata<char>("signal") 
                <<std::endl;
-             */
+             
         }
 
         //----------------------------------------   Photons
         xAOD::PhotonContainer* photons = 0;
         xAOD::ShallowAuxContainer* photons_aux = 0;
-        if (! m_SUSYObjTool->GetPhotons(photons,photons_aux,false).isSuccess() ) {
+        if (! m_SUSYObjTool->GetPhotons(photons, photons_aux, false).isSuccess() ) {
             throw std::runtime_error("Could not retrieve Photons");
         }
         if ( storeVariation ) {
@@ -464,14 +464,14 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             }
         }
 
-        for ( const auto& jet : *jets ) {
-            //onlt contained obsoleete code
-        }
+        //for ( const auto& jet : *jets ) {
+            //only contained obsolete code
+        //}
 
         // GetTotalMuonSF also test for OR
         float muSF = 1.f;
         if ( !m_isData ) {
-            muSF = (float) m_SUSYObjTool->GetTotalMuonSF(*muons,true,true,"HLT_mu20_iloose_L1MU15_OR_HLT_mu50");
+            muSF = (float) m_SUSYObjTool->GetTotalMuonSF(*muons, true, true, "HLT_mu20_iloose_L1MU15_OR_HLT_mu50");
         }
         eventInfo->auxdecor<float>("muSF") = muSF ; 
 
@@ -503,7 +503,10 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                     true,
                     true,
                     0).isSuccess() 
-           ) throw std::runtime_error("Error in GetMET");
+           ) {
+            throw std::runtime_error("Error in GetMET");
+        }
+
         TVector2* MissingET = new TVector2(0.,0.);
         xAOD::MissingETContainer::const_iterator met_it = rebuiltmetc->find("Final");
         if ( met_it == rebuiltmetc->end() ) throw std::runtime_error("Could not find Final MET after running  GetMET");
@@ -516,7 +519,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             sys_variations_kinematics->push_back(systSet);
         }
         if ( sys.affectsWeights || systSet.name()=="" ) {
-            event_weights->push_back(elSF*phSF*muSF);
+            event_weights->push_back(elSF * phSF * muSF);
             event_weights_names->push_back(systSet.name());
         }
 
@@ -553,8 +556,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
     return true;
 }
 
-void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const
-{
+void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const {
 #ifndef ZLDC14
     static std::vector<std::string> trigNames = {
         "L1_XE50",
