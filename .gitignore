@@ -9,3 +9,4 @@ SUSYTools/
 TauAnalysisTools
 cafe/
 output*.root
+*.pool.root*
