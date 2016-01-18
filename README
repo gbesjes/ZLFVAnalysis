@@ -13,3 +13,6 @@ asgConf={ 'private': { 'asgType': 'private',
                'location': '/Users/gbesjes/bin/AnalysisBase',
                'pattern': '*.*.*'}}
 
+Don't forget to run
+root -b -q $ROOTCOREDIR/scripts/load_packages.C
+after you run source rcSetup.sh - otherwise you get weird errors.
