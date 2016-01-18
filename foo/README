@@ -17,6 +17,14 @@ asgConf={ 'private': { 'asgType': 'private',
                'location': '/Users/gbesjes/bin/AnalysisBase',
                'pattern': '*.*.*'}}
 
+The directory should contain AnalysisBase/<release> directories, like this:
+
+gbesjes@imac-besjes:~ $ find /Users/gbesjes/bin/AnalysisBase -maxdepth 2
+/Users/gbesjes/bin/AnalysisBase
+/Users/gbesjes/bin/AnalysisBase/AnalysisBase
+/Users/gbesjes/bin/AnalysisBase/AnalysisBase/2.3.32
+/Users/gbesjes/bin/AnalysisBase/AnalysisBase/2.3.36
+
 Setup
 -----
 Don't forget to run
