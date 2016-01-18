@@ -212,6 +212,8 @@ void ObjectBuilder::initializeSystematics() {
         return;
     }
 
+    out() << "ObjectBuilder::initializeSystematics()" << std::endl;
+
     // If we don't select anything, use everything
     std::vector<ST::SystInfo> sysInfos = m_SUSYObjTool->getSystInfoList();
     if (  m_SystMatch.empty() ) {
@@ -238,6 +240,9 @@ void ObjectBuilder::initializeSystematics() {
         }
         if ( matched ) {
             m_SystInfoList.push_back(sys);
+            out() << " => Will use systematic " << name << std::endl;
+        } else {
+            out() << " => Will _not_ use systematic " << name << std::endl;
         }
     }
 }
@@ -253,7 +258,9 @@ void ObjectBuilder::initializeNoSystematics() {
 
 bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
 
-    std::cout << "HELLO" << std::endl;
+    out() << "=============================" << std::endl;
+    out() << "ObjectBuilder::processEvent()" << std::endl;
+    out() << "=============================" << std::endl;
 
     // for muon trigger SF
     if ( ! m_SUSYObjTool->setRunNumber(267639).isSuccess() ) {
@@ -272,10 +279,13 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
     // make to use no systematics
     m_SUSYObjTool->resetSystematics();
 
-    //----------------------------------------   Taus
+/*
+    ////////
+    // Taus
+    ////////
     std::pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* > susytaus = std::make_pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* >(NULL,NULL);
     const xAOD::TauJetContainer* taus = 0;
-    if (!event.retrieve(taus,m_tauContainerKey).isSuccess()){
+    if (!event.retrieve(taus, m_tauContainerKey).isSuccess()){
         throw std::runtime_error("Could not retrieve TauJetContainer");
     }
 
@@ -305,7 +315,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             for ( const auto& syst : m_tauEffSystSetList ){
                 // one by one apply systematic variation 
                 if (m_tauEffTool->applySystematicVariation(syst) != CP::SystematicCode::Ok){
-                    throw std::runtime_error("Could not configure for systematic variatoin" );
+                    throw std::runtime_error("Could not configure for systematic variation" );
                 } else {
                     m_tauEffTool->applyEfficiencyScaleFactor( **tau_itr );
                     std::string systName = syst.name();
@@ -326,18 +336,19 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         }
     }
 
-    if ( ! store->record(susytaus.first,"SUSYTaus"+m_suffix).isSuccess() ) {
+    if ( ! store->record(susytaus.first, "SUSYTaus"+m_suffix).isSuccess() ) {
         throw std::runtime_error("Could not store SUSYTaus"+m_suffix);
     }
-    if ( ! store->record(susytaus.second,"SUSYTaus"+m_suffix+"Aux.").isSuccess()) {
+    if ( ! store->record(susytaus.second, "SUSYTaus"+m_suffix+"Aux.").isSuccess()) {
         throw std::runtime_error("Could not store SUSYTaus"+m_suffix+"Aux.");
     }
+*/
 
     // loop over systematics variations
     std::vector<float>* event_weights = new std::vector<float>;
     std::vector<std::string>* event_weights_names = new std::vector<std::string>;
     std::vector<CP::SystematicSet>* sys_variations_kinematics = new std::vector<CP::SystematicSet>;
-    for  ( const auto & sys : m_SystInfoList ) {
+    for (const auto& sys : m_SystInfoList ) {
         const CP::SystematicSet& systSet = sys.systset;
         std::string tag = "";
         if ( ! systSet.empty() ) tag = "_"+systSet.name()+"_";
@@ -346,12 +357,14 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             throw std::runtime_error("Could not apply systematics "+systSet.name());
         }
 
-        bool storeVariation = systSet.name()=="" || sys.affectsKinematics;
+        bool storeVariation = (systSet.name() == "" || sys.affectsKinematics);
 
-        //----------------------------------------   Jets
+        ////////
+        // Jets
+        ////////
         xAOD::JetContainer* jets = 0;
         xAOD::ShallowAuxContainer* jets_aux = 0;
-        if (! m_SUSYObjTool->GetJets(jets,jets_aux,false).isSuccess() ) {
+        if (! m_SUSYObjTool->GetJets(jets, jets_aux, false).isSuccess() ) {
             throw std::runtime_error("Could not retrieve Jets");
         }
         if ( storeVariation ) {
@@ -362,8 +375,54 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYJets"+m_suffix+tag+"Aux.");
             }
         }
+        
+        out() <<  "Jets"+m_suffix+tag+" jets " << std::endl;
+        for( const auto& jet: *jets) {
+            out() << " jet " << jet->pt() << " " << jet->eta()
+                << " " << jet->phi() 
+                << " baseline " <<  (int) jet->auxdata<char>("baseline") 
+                << " signal " <<  (int) jet->auxdata<char>("signal") 
+                << std::endl;
+        }
+        
+        ////////
+        // Taus
+        ////////
+        xAOD::TauJetContainer* taus = 0;
+        xAOD::ShallowAuxContainer* taus_aux = 0;
+        if (! m_SUSYObjTool->GetTaus(taus, taus_aux, false).isSuccess() ) {
+            throw std::runtime_error("Could not retrieve taus");
+        }
+        if ( storeVariation ) {
+            if ( ! store->record(taus,"SUSYTaus"+m_suffix+tag).isSuccess() ) {
+                throw std::runtime_error("Could not store SUSYTaus"+m_suffix+tag);
+            }
+            if ( ! store->record(taus_aux,"SUSYTaus"+m_suffix+tag+"Aux.").isSuccess() ) {
+                throw std::runtime_error("Could not store SUSYTaus"+m_suffix+tag+"Aux.");
+            }
+        }
+        
+        float tauSF = 1.0;
+        out() <<  "Taus"+m_suffix+tag+" taus " << std::endl;
+        for ( const auto& tau : *taus ) {
+            if ( !m_isData && tau->auxdata<char>("signal") != 0 ) {
+                float sf = m_SUSYObjTool->GetSignalTauSF(*tau);
+                tau->auxdecor<float>("sf") = sf;
+                tauSF *= sf;
+            } else {
+                tau->auxdecor<float>("sf") = 1.;
+            }
 
-        //----------------------------------------   Muons
+            out() << " tau " << tau->pt() << " " << tau->eta()
+                << " " << tau->phi() 
+                << " baseline " <<  (int) tau->auxdata<char>("baseline") 
+                << " signal " <<  (int) tau->auxdata<char>("signal") 
+                << std::endl;
+        }
+
+        /////////
+        // Muons
+        /////////
         xAOD::MuonContainer* muons = 0;
         xAOD::ShallowAuxContainer* muons_aux = 0;
         if (! m_SUSYObjTool->GetMuons(muons,muons_aux,false).isSuccess() ) {
@@ -393,32 +452,35 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                <<std::endl;
         }
 
-
-        //----------------------------------------   Electrons
+        /////////////
+        // Electrons
+        /////////////
         xAOD::ElectronContainer* electrons = 0;
         xAOD::ShallowAuxContainer* electrons_aux = 0;
-        if (! m_SUSYObjTool->GetElectrons(electrons,electrons_aux,false).isSuccess() ) {
+        if (! m_SUSYObjTool->GetElectrons(electrons, electrons_aux, false).isSuccess() ) {
             throw std::runtime_error("Could not retrieve Electrons");
         }
         if ( storeVariation ) {
-            if ( ! store->record(electrons,"SUSYElectrons"+m_suffix+tag).isSuccess() ) {
+            if ( ! store->record(electrons, "SUSYElectrons"+m_suffix+tag).isSuccess() ) {
                 throw std::runtime_error("Could not store SUSYElectrons"+m_suffix+tag);
             }
-            if ( ! store->record(electrons_aux,"SUSYElectrons"+m_suffix+tag+"Aux.").isSuccess() ) {
+            if ( ! store->record(electrons_aux, "SUSYElectrons"+m_suffix+tag+"Aux.").isSuccess() ) {
                 throw std::runtime_error("Could not store SUSYElectrons"+m_suffix+tag+"Aux.");
             }
         }
         out() <<  "Electrons"+m_suffix+tag+" electrons " << std::endl;
         for ( const auto& el : *electrons ) {
                out() << " Electron " << el->pt() << " " << el->eta()
-               << " " << el->phi() 
-               << " baseline " <<  (int) el->auxdata<char>("baseline") 
-               << " signal " <<  (int) el->auxdata<char>("signal") 
-               <<std::endl;
+                   << " " << el->phi() 
+                   << " baseline " <<  (int) el->auxdata<char>("baseline") 
+                   << " signal " <<  (int) el->auxdata<char>("signal") 
+                   << std::endl;
              
         }
 
-        //----------------------------------------   Photons
+        ///////////
+        // Photons
+        ///////////
         xAOD::PhotonContainer* photons = 0;
         xAOD::ShallowAuxContainer* photons_aux = 0;
         if (! m_SUSYObjTool->GetPhotons(photons, photons_aux, false).isSuccess() ) {
@@ -432,7 +494,8 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYPhotons"+m_suffix+tag+"Aux.");
             }
         }
-        //out() <<  "Photons"+m_suffix+tag+" photons " << std::endl;
+        
+        out() <<  "Photons"+m_suffix+tag+" photons " << std::endl;
         float phSF = 1;
         for ( const auto& ph : *photons ) {
             if ( !m_isData && ph->auxdata<char>("signal") != 0 ) {
@@ -442,31 +505,25 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             } else {
                 ph->auxdecor<float>("sf") = 1.;
             }
-            /*
-               out() << " Photon " << ph->pt() << " " << ph->eta()
-               << " " << ph->phi() 
-               << " baseline " <<  (int) ph->auxdata<char>("baseline") 
-               << " signal " <<  (int) ph->auxdata<char>("signal") 
-               <<std::endl;
-             */
+            
+            out() << " Photon " << ph->pt() << " " << ph->eta()
+                << " " << ph->phi() 
+                << " baseline " <<  (int) ph->auxdata<char>("baseline") 
+                << " signal " <<  (int) ph->auxdata<char>("signal") 
+                << std::endl;
         }
         eventInfo->auxdecor<float>("phSF") = phSF ; 
 
         // Overlap removal
         if ( m_photonInOR ) {
-            if ( ! m_SUSYObjTool->OverlapRemoval(electrons, muons, jets, photons).isSuccess() ) {
+            if ( ! m_SUSYObjTool->OverlapRemoval(electrons, muons, jets, photons, taus).isSuccess() ) {
+                throw std::runtime_error("Error in OverlapRemoval");
+            }
+        } else {
+            if ( ! m_SUSYObjTool->OverlapRemoval(electrons, muons, jets, 0, taus).isSuccess() ) {
                 throw std::runtime_error("Error in OverlapRemoval");
             }
         }
-        else {
-            if ( ! m_SUSYObjTool->OverlapRemoval(electrons, muons, jets).isSuccess() ) {
-                throw std::runtime_error("Error in OverlapRemoval");
-            }
-        }
-
-        //for ( const auto& jet : *jets ) {
-            //only contained obsolete code
-        //}
 
         // GetTotalMuonSF also test for OR
         float muSF = 1.f;
@@ -482,44 +539,41 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         }
         eventInfo->auxdecor<float>("elSF") = elSF ; 
 
-        xAOD::MissingETContainer* rebuiltmetc = new xAOD::MissingETContainer();
-        xAOD::MissingETAuxContainer* rebuiltmetcAux = new xAOD::MissingETAuxContainer();
-        rebuiltmetc->setStore(rebuiltmetcAux);
+        xAOD::MissingETContainer* rebuiltMET = new xAOD::MissingETContainer();
+        xAOD::MissingETAuxContainer* rebuiltMET_aux = new xAOD::MissingETAuxContainer();
+        rebuiltMET->setStore(rebuiltMET_aux);
         if ( storeVariation ) {
-            if ( ! store->record(rebuiltmetc,"MET_ZL"+m_suffix+tag).isSuccess() ) {
-                throw std::runtime_error("Unable to store MissingETContainer with tag MET_ZL"+m_suffix+tag);
+            if ( ! store->record(rebuiltMET, "MET_ZLFV"+m_suffix+tag).isSuccess() ) {
+                throw std::runtime_error("Unable to store MissingETContainer with tag MET_ZLFV"+m_suffix+tag);
             }
-            if ( ! store->record(rebuiltmetcAux,"MET_ZL"+m_suffix+tag+"Aux.").isSuccess() ) {
-                throw std::runtime_error("Unable to store MissingETAuxContainer with tag MET_ZL"+m_suffix+tag+"Aux");
+            if ( ! store->record(rebuiltMET_aux, "MET_ZLFV"+m_suffix+tag+"Aux.").isSuccess() ) {
+                throw std::runtime_error("Unable to store MissingETAuxContainer with tag MET_ZLFV"+m_suffix+tag+"Aux");
             }
         }
 
-        if ( ! m_SUSYObjTool->GetMET(*rebuiltmetc,
-                    jets,
-                    electrons,
-                    muons,
-                    photons,
-                    0,
-                    true,
-                    true,
-                    0).isSuccess() 
-           ) {
+        if ( ! m_SUSYObjTool->GetMET(*rebuiltMET, jets, electrons, muons, photons, taus, true, true, 0).isSuccess() ) {
             throw std::runtime_error("Error in GetMET");
         }
 
+        // Do we have a rebuilt MET?
+        xAOD::MissingETContainer::const_iterator met_it = rebuiltMET->find("Final");
+        if ( met_it == rebuiltMET->end() ) { 
+            throw std::runtime_error("Could not find Final MET after running  GetMET");
+        }
+
+        // now retrieve the result
         TVector2* MissingET = new TVector2(0.,0.);
-        xAOD::MissingETContainer::const_iterator met_it = rebuiltmetc->find("Final");
-        if ( met_it == rebuiltmetc->end() ) throw std::runtime_error("Could not find Final MET after running  GetMET");
         MissingET->Set((*met_it)->mpx(), (*met_it)->mpy());
-        if ( ! store->record(MissingET,"SUSYMET"+m_suffix+tag).isSuccess() ) {
+        if ( ! store->record(MissingET, "SUSYMET"+m_suffix+tag).isSuccess() ) {
             throw std::runtime_error("Could not store SUSYMET with tag SUSYMET"+m_suffix+tag);
         }
 
-        if ( sys.affectsKinematics || systSet.name()=="" ) {
+        if ( sys.affectsKinematics || systSet.name() == "" ) {
             sys_variations_kinematics->push_back(systSet);
         }
-        if ( sys.affectsWeights || systSet.name()=="" ) {
-            event_weights->push_back(elSF * phSF * muSF);
+        
+        if ( sys.affectsWeights || systSet.name() == "" ) {
+            event_weights->push_back(elSF * phSF * muSF * tauSF);
             event_weights_names->push_back(systSet.name());
         }
 
@@ -527,16 +581,17 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         if ( !storeVariation ) {
             delete jets;
             delete jets_aux;
+            delete taus;
+            delete taus_aux;
             delete muons;
             delete muons_aux;
             delete electrons;
             delete electrons_aux;
             delete photons;
             delete photons_aux;
-            delete rebuiltmetc;
-            delete rebuiltmetcAux;
+            delete rebuiltMET;
+            delete rebuiltMET_aux;
         }
-
     }
 
     // store variations that affect kinematics -> need to rerun SR+CR
@@ -551,13 +606,15 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         throw std::runtime_error("Could not store event_weights"+m_suffix);
     }
 
-    if ( m_suffix == "" ) fillTriggerInfo(event);
+    if ( m_suffix == "" ) {
+        fillTriggerInfo(event);
+    }
 
     return true;
 }
 
 void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const {
-#ifndef ZLDC14
+    // TODO: update list of triggers
     static std::vector<std::string> trigNames = {
         "L1_XE50",
         "L1_XE70",
@@ -619,8 +676,7 @@ void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const {
     if ( ! store->record(triggerSet,"triggerbits").isSuccess() ) {
         throw std::runtime_error("Could not store trigger bits");
     }
-    //std::cout << " trigger " << triggers << " " << *triggerSet << std::endl;
-#endif
+    std::cout << " trigger " << triggers << " " << *triggerSet << std::endl;
 }
 
 

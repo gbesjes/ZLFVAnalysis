@@ -25,7 +25,7 @@ Bookkeeper::Bookkeeper(const char *name) :
     m_derivationTag(DerivationTag::INVALID_Derivation), m_isData(false), _directory(0) {
     
     cafe::Config config(name);
-    m_isData = config.get("IsData",false);
+    m_isData = config.get("IsData", false);
     m_derivationTag = Utils::derivationTagFromString(config.get("DerivationTag","xxxx"));
     if ( m_derivationTag == DerivationTag::INVALID_Derivation ) { 
         throw(std::domain_error("Bookkeeper: invalid derivation tag specified"));
@@ -35,6 +35,7 @@ Bookkeeper::Bookkeeper(const char *name) :
 }
 
 void Bookkeeper::openPoolFileCatalog() {
+    std::cout << "Bookkeeper::openPoolFileCatalog()" << std::endl;
     std::ifstream pfcfile("pfc.txt", std::ios::in);
     if ( !(pfcfile.is_open() && pfcfile) ) {
         std::cerr << "Could not open text PoolFileCatalog pfc.txt" << std::endl;
@@ -123,8 +124,8 @@ void Bookkeeper::inputFileOpened(TFile *file) {
 
         std::cout << "Derivation file : " << file->GetName() << " nprocessed " <<  nEventsProcessed << " sumW " << sumOfWeights << std::endl;
 
-        m_counter->Fill(0.1,nEventsProcessed);
-        m_counter->Fill(1.1,sumOfWeights);
+        m_counter->Fill(0.1, nEventsProcessed);
+        m_counter->Fill(1.1, sumOfWeights);
 
     }
 }
@@ -137,7 +138,7 @@ void Bookkeeper::inputFileClosing(TFile *file) {
 bool Bookkeeper::processEvent(xAOD::TEvent& event) {
     ++m_eventCounter;
     if ( m_derivationTag == DerivationTag::NotADerivation ||  m_derivationTag == DerivationTag::p1872 ) {
-        m_counter->Fill(0.1,1.);
+        m_counter->Fill(0.1, 1.);
         const xAOD::EventInfo* eventInfo = 0;
         if ( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) throw std::runtime_error("Could not retrieve EventInfo");
 
@@ -154,7 +155,7 @@ bool Bookkeeper::processEvent(xAOD::TEvent& event) {
 void Bookkeeper::finish() {
     std::cout << "Files processed: " << std::endl;
     for ( std::size_t i = 0; i < m_closedFiles.size(); ++i ){
-        std::string guid("UNKNOW-GUID");
+        std::string guid("UNKNOWN-GUID");
         std::string logicalName =  m_closedFiles[i];
         // has to cover files like 
         // root://atlas-xrd-central.usatlas.org:1094//atlas/rucio/mc14_8TeV:AOD.01507240._010001.pool.root.2
