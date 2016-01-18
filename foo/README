@@ -16,3 +16,14 @@ asgConf={ 'private': { 'asgType': 'private',
 Don't forget to run
 root -b -q $ROOTCOREDIR/scripts/load_packages.C
 after you run source rcSetup.sh - otherwise you get weird errors.
+
+Running
+-------
+
+1) Ensure you have a running cvmfs mount!
+2) setupATLAS
+3) source rcSetup.sh
+4) root -b -q $ROOTCOREDIR/scripts/load_packages.C
+5) cafe ZLFVAnalysis/zLFV.config Input: DAOD_HIGG4D2.06315294._000001.pool.root.1 | tee test.log
+
+Errors related to a tau tool missing a selection.xml are likely due to a missing cvmfs mount!
