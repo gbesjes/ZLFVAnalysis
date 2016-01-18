@@ -7,12 +7,18 @@ $ diff -u /cvmfs/atlas.cern.ch/repo/sw/ASG/AnalysisBase/2.3.36/packages.rc /cvmf
 
 It will make a list of all the tags that are different between AnalysisBase and AnalysisSUSY and add them to an extra_packages.rc file. 
 
+Note: to automatise this commands for different releases, work in `rc get_release | rev | cut -d "/" -f 2 | rev` rather than a particular number. (Requires a release already set up though.)
+
+Private builds
+--------------
 Missing a private build? Put this in $HOME/.rcSetup.conf (with the correct locations):
 
 asgConf={ 'private': { 'asgType': 'private',
                'location': '/Users/gbesjes/bin/AnalysisBase',
                'pattern': '*.*.*'}}
 
+Setup
+-----
 Don't forget to run
 root -b -q $ROOTCOREDIR/scripts/load_packages.C
 after you run source rcSetup.sh - otherwise you get weird errors.
