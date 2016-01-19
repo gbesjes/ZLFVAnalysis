@@ -34,6 +34,8 @@ namespace Utils {
     const xAOD::EventInfo* GetEventInfo(xAOD::TEvent& event);
     const xAOD::Vertex* GetPrimaryVertex(xAOD::TEvent& event);
     const EventInfo ExtractEventInfo(const xAOD::EventInfo* info, bool isData = true);
+
+    CP::SystematicSet* GetCurrentSystematicSet(xAOD::TEvent& event);
 }
 
 #endif
