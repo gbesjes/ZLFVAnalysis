@@ -12,22 +12,22 @@
 #include <string>
 
 DetectorQuality::DetectorQuality(const char *name)
-: cafe::Processor(name), m_period(RunPeriod::INVALID) {
+    : cafe::Processor(name), m_period(RunPeriod::INVALID) {
     cafe::Config config(name);
     m_period = Utils::periodFromString(config.get("Period","p13tev"));
 }
 
 bool DetectorQuality::processEvent(xAOD::TEvent& event) {
     const xAOD::EventInfo* eventInfo = 0;
-    if( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) { 
+    if( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) {
         return true;
     }
 
     std::cout << "Event flag : LAr " << eventInfo->errorState(xAOD::EventInfo::LAr) << " Tile " << eventInfo->errorState(xAOD::EventInfo::Tile)  << " Core " << eventInfo->eventFlags(xAOD::EventInfo::Core)  << std::endl;
 
     bool* badDetectorQuality = new bool;
-    *badDetectorQuality = 
-        eventInfo->errorState(xAOD::EventInfo::LAr) != xAOD::EventInfo::NotSet || 
+    *badDetectorQuality =
+        eventInfo->errorState(xAOD::EventInfo::LAr) != xAOD::EventInfo::NotSet ||
         eventInfo->errorState(xAOD::EventInfo::Tile) == xAOD::EventInfo::Error ||
         eventInfo->errorState(xAOD::EventInfo::SCT) == xAOD::EventInfo::Error ||
         ((eventInfo->eventFlags(xAOD::EventInfo::Core) & 0x40000) != 0);

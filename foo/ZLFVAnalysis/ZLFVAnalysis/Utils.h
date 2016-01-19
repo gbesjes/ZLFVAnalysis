@@ -22,7 +22,7 @@ namespace Utils {
     RunPeriod periodFromString(const std::string& period);
     DerivationTag derivationTagFromString(const std::string& tag);
     xAOD::JetInput::Type JetTypeFromString(const std::string& algname);
-    const xAOD::Vertex* GetPrimaryVertex(xAOD::TEvent& event); 
+    const xAOD::Vertex* GetPrimaryVertex(xAOD::TEvent& event);
 }
 
 #endif

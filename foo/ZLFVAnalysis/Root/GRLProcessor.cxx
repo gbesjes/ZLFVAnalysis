@@ -13,12 +13,12 @@
 #include <string>
 
 GRLProcessor::GRLProcessor(const char *name)
-: cafe::Processor(name), m_GRLtool(0), m_passAll(false) {
+    : cafe::Processor(name), m_GRLtool(0), m_passAll(false) {
     cafe::Config config(name);
-    
+
     std::string GRLXMLFile = config.get("GRLFile", "");
     m_passAll = config.get("passAll",false);
-    
+
     if ( ! m_passAll) {
         bool verbose = config.get("verbose",false);
         m_GRLtool = new GoodRunsListSelectionTool("cafeGRL");
@@ -27,7 +27,9 @@ GRLProcessor::GRLProcessor(const char *name)
         m_GRLtool->setProperty("GoodRunsListVec",GRLXMLs).ignore();
         m_GRLtool->setProperty("VerboseDetStatus",verbose).ignore();
         m_GRLtool->initialize().ignore();
-        if ( verbose ) m_GRLtool->getGRLCollection()->Summary();
+        if ( verbose ) {
+            m_GRLtool->getGRLCollection()->Summary();
+        }
     }
 }
 

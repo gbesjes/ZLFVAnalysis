@@ -1,5 +1,5 @@
 // vim: ts=4 sw=4
-#ifndef HAVE_GRL_PROCESSOR_H 
+#ifndef HAVE_GRL_PROCESSOR_H
 #define HAVE_GRL_PROCESSOR_H
 
 #include "cafe/Processor.h"
@@ -11,16 +11,16 @@
 //------------------------------------------------
 
 class GRLProcessor : public cafe::Processor {
-    public:
-        GRLProcessor(const char *name);
-        ~GRLProcessor();
-        bool processEvent(xAOD::TEvent& event);
-    private:
-        GoodRunsListSelectionTool* m_GRLtool;
-        bool m_passAll;
+  public:
+    GRLProcessor(const char *name);
+    ~GRLProcessor();
+    bool processEvent(xAOD::TEvent& event);
+  private:
+    GoodRunsListSelectionTool* m_GRLtool;
+    bool m_passAll;
 
-    public:
-        ClassDef(GRLProcessor, 0);
+  public:
+    ClassDef(GRLProcessor, 0);
 };
 
-#endif 
+#endif

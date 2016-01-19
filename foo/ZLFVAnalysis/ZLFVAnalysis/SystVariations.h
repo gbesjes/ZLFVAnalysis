@@ -19,24 +19,24 @@
 // Processors are called for each systematic
 //--------------------------------------------------------------------------
 class SystVariations : public cafe::Processor {
-    public:
-        SystVariations(const char *name);
-        ~SystVariations();
-        void begin();
-        bool processEvent(xAOD::TEvent& event);
-        void finish();
-        virtual void inputFileOpened(TFile *file);
-        virtual void inputFileClosing(TFile *file);
+  public:
+    SystVariations(const char *name);
+    ~SystVariations();
+    void begin();
+    bool processEvent(xAOD::TEvent& event);
+    void finish();
+    virtual void inputFileOpened(TFile *file);
+    virtual void inputFileClosing(TFile *file);
 
-    private:
-        Counter* m_counter;
+  private:
+    Counter* m_counter;
 
-        std::list<cafe::Processor*> m_processors;
-        bool add(const std::list<cafe::Processor*>& procs);
-        bool add(cafe::Processor *proc);
+    std::list<cafe::Processor*> m_processors;
+    bool add(const std::list<cafe::Processor*>& procs);
+    bool add(cafe::Processor *proc);
 
-    public:
-        ClassDef(SystVariations, 0);
+  public:
+    ClassDef(SystVariations, 0);
 };
 
-#endif 
+#endif

@@ -24,7 +24,7 @@ Counter::Counter(const std::string & name, int maxcounters, bool isSignal) :
         } else {
             _histo_signal = new TH2D("Counter_for_"+TString(name), "Counter for "+TString(name), maxcounters+1 , 0, maxcounters+1,  250,  0,  250);
         }
-    } else { 
+    } else {
         throw std::logic_error("invalid number of counters");
     }
 }
@@ -62,7 +62,7 @@ void Counter::increment(double poids,int counter, std::string note, int iproc) {
             assert(0);
             //throw std::out_of_range("In valid counter for "+_name);
         }
-        
+
         if ( _histo->GetBinContent(counter+1) == 0. ) {
             _histo_cuts[counter] = note;
         }
@@ -75,9 +75,9 @@ void Counter::increment(double poids,int counter, std::string note, int iproc) {
             cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
             assert(0);
             //throw std::out_of_range("In valid counter for "+_name);
-        } 
-        
-        if ( _histo_signal->Integral(counter+1,counter+1,1,250) == 0.){
+        }
+
+        if ( _histo_signal->Integral(counter+1,counter+1,1,250) == 0.) {
             _histo_signal_cuts[counter] = note;
         }
         _histo_signal->Fill(counter,iproc,poids);
@@ -89,11 +89,11 @@ void Counter::get_counters(std::vector<double> & counters, int iproc) const {
         for ( int i = 0; i < _histo->GetXaxis()->GetNbins()-1; ++i) {
             counters.push_back(_histo->GetBinContent(i+1));
         }
-    } else { 
+    } else {
         for ( int i = 0; i < _histo_signal->GetXaxis()->GetNbins()-1; ++i) {
             counters.push_back(_histo_signal->GetBinContent(i+1, iproc));
         }
-    } 
+    }
 }
 
 std::ostream&  operator<< (std::ostream& os, const Counter& counter) {
@@ -114,22 +114,22 @@ std::ostream&  operator<< (std::ostream& os, const Counter& counter) {
             continue;
         }
         double effrel = 1.;
-        if(i>=1 && (double)counter._histo->GetBinContent(i)!=0 ) { 
-            effrel = (double)counter._histo->GetBinContent(i+1) / 
-                (double)counter._histo->GetBinContent(i);
+        if(i>=1 && (double)counter._histo->GetBinContent(i)!=0 ) {
+            effrel = (double)counter._histo->GetBinContent(i+1) /
+                     (double)counter._histo->GetBinContent(i);
         }
 
-        std::string descript = counter._histo_cuts[i]; 
-        if( descript !="") { 
-            os << std::setw(wcount) << descript << 
-            std::setw(NMAX-descript.size() )<< ": " << std::setw(8) <<
-                setprecision(3)<< counter._histo->GetBinContent(i+1) << " " << std::setw(width)<<setprecision(3)<<" "<<(double)counter._histo->GetBinContent(i+1)/counter._histo->GetBinContent(1)<<setprecision(3)<<" "<< std::setw(width)<<setprecision(3)<<effrel;
+        std::string descript = counter._histo_cuts[i];
+        if( descript !="") {
+            os << std::setw(wcount) << descript <<
+               std::setw(NMAX-descript.size() )<< ": " << std::setw(8) <<
+               setprecision(3)<< counter._histo->GetBinContent(i+1) << " " << std::setw(width)<<setprecision(3)<<" "<<(double)counter._histo->GetBinContent(i+1)/counter._histo->GetBinContent(1)<<setprecision(3)<<" "<< std::setw(width)<<setprecision(3)<<effrel;
         } else {
             os << std::setw(wcount) <<  i << std::setw(NMAX-2)<< ": " << std::setw(8) << counter._histo->GetBinContent(i+1) << " " << std::setw(width);
-       }
+        }
         if ( (i+1)%1 == 0 ) os << std::endl;
     }
-    os << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl; 
+    os << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
     os << std::endl;
 
     return os;
@@ -139,7 +139,7 @@ Counter* CounterRepository::counter(const std::string& label) {
     std::map<std::string,Counter*>::const_iterator pos = m_CounterMap.find(label);
     if ( pos == m_CounterMap.end() ) {
         std::string tag;
-        if ( label != "" ) { 
+        if ( label != "" ) {
             tag = "_"+label;
         }
 
@@ -155,14 +155,14 @@ Counter* CounterRepository::counter(const std::string& label) {
 
 CounterRepository::~CounterRepository() {
     for ( std::map<std::string,Counter*>::iterator pos = m_CounterMap.begin();
-            pos != m_CounterMap.end(); pos++ ){
+            pos != m_CounterMap.end(); pos++ ) {
         delete pos->second;
     }
 }
 
 std::ostream&  operator<< (std::ostream& os, const CounterRepository& counterRep) {
     for ( std::map<std::string,Counter*>::const_iterator pos = counterRep.m_CounterMap.begin();
-            pos != counterRep.m_CounterMap.end(); pos++ ){
+            pos != counterRep.m_CounterMap.end(); pos++ ) {
         os << *(pos->second);
     }
     return os;

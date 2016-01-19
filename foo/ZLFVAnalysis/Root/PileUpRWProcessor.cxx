@@ -14,7 +14,7 @@
 #include <stdexcept>
 
 PileUpRWProcessor::PileUpRWProcessor(const char *name)
-: cafe::Processor(name) {
+    : cafe::Processor(name) {
     cafe::Config config(name);
     m_noReweighting = config.get("noReweighting", false);
     m_forcedRunNumber = config.get("forcedRunNumber", -1);
@@ -50,13 +50,13 @@ bool PileUpRWProcessor::processEvent(xAOD::TEvent& event) {
     std::vector<float>* pileupWeight = new std::vector<float>(3, 1.);
 
     const xAOD::EventInfo* eventInfo = 0;
-    if( !event.retrieve( eventInfo, "EventInfo").isSuccess() ) { 
+    if( !event.retrieve( eventInfo, "EventInfo").isSuccess() ) {
         throw std::runtime_error("Could not retrieve EventInfo");
     }
 
     int runnumber = -1;
     if ( m_forcedRunNumber > 0 ) {
-        runnumber = m_forcedRunNumber; 
+        runnumber = m_forcedRunNumber;
     } else {
         runnumber = (int)eventInfo->runNumber();
     }

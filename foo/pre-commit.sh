@@ -5,7 +5,7 @@
 #   ln -s ../../pre-commit.sh .git/hooks/pre-commit
 #   chmod +x pre-commit.sh
 
-OPTIONS="--style=google --attach-classes --attach-inlines --attach-namespaces --indent-classes"
+OPTIONS="--style=google --attach-classes --attach-inlines --attach-namespaces --indent-classes --indent-namespaces"
 
 RETURN=0
 ASTYLE=$(which astyle)
@@ -18,7 +18,7 @@ FILES=`git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(c|cpp|cxx|
 for FILE in $FILES; do
     $ASTYLE $OPTIONS < $FILE | cmp -s $FILE -
     if [ $? -ne 0 ]; then
-        echo "[!] $FILE does not respect the agreed coding style." >&2
+        echo "[!] $FILE does not respect the indentation." >&2
         RETURN=1
     fi
 done
@@ -26,7 +26,7 @@ done
 if [ $RETURN -eq 1 ]; then
     echo "" >&2
     echo "Make sure you have run astyle with the following options:" >&2
-    echo $OPTIONS >&2
+    echo astyle $OPTIONS >&2
 fi
 
 exit $RETURN
