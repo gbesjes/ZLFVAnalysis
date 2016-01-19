@@ -10,3 +10,4 @@ TauAnalysisTools
 cafe/
 output*.root
 *.pool.root*
+*.orig
