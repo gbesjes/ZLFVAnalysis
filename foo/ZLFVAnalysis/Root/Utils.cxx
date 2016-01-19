@@ -33,3 +33,18 @@ xAOD::JetInput::Type Utils::JetTypeFromString(const std::string& algname) {
 
     return xAOD::JetInput::Uncategorized;
 }
+
+const xAOD::Vertex* Utils::GetPrimaryVertex(xAOD::TEvent& event) {
+    const xAOD::VertexContainer* vertices = nullptr;
+    if (!event.retrieve( vertices, "PrimaryVertices" ).isSuccess() ) {
+        return nullptr;
+    }
+    
+    for ( const auto& vx: *vertices ) {
+        if(vx->vertexType() == xAOD::VxType::PriVtx) { 
+            return vx;
+        }
+    }
+    
+    return NULL;
+}

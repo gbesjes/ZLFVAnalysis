@@ -205,6 +205,7 @@ void ObjectBuilder::initializeTauSelectionTools() {
 }
 
 void ObjectBuilder::initializeSystematics() {
+    out() << "ObjectBuilder::initializeSystematics()" << std::endl;
 
     // Do we actually have systematics?
     if ( !m_doSystematics ) {
@@ -212,12 +213,14 @@ void ObjectBuilder::initializeSystematics() {
         return;
     }
 
-    out() << "ObjectBuilder::initializeSystematics()" << std::endl;
-
     // If we don't select anything, use everything
     std::vector<ST::SystInfo> sysInfos = m_SUSYObjTool->getSystInfoList();
     if (  m_SystMatch.empty() ) {
         m_SystInfoList = sysInfos;
+        for ( const auto& sys: sysInfos){
+            const CP::SystematicSet& systSet = sys.systset;
+            out() << " => Will use systematic " << systSet.name() << std::endl;
+        }
         return;
     } 
 
@@ -248,6 +251,7 @@ void ObjectBuilder::initializeSystematics() {
 }
 
 void ObjectBuilder::initializeNoSystematics() {
+    out() << "ObjectBuilder::initializeNoSystematics()" << std::endl;
     // fill with default "no systematics"
     ST::SystInfo infodef;
     infodef.affectsKinematics = false;
@@ -351,7 +355,9 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
     for (const auto& sys : m_SystInfoList ) {
         const CP::SystematicSet& systSet = sys.systset;
         std::string tag = "";
-        if ( ! systSet.empty() ) tag = "_"+systSet.name()+"_";
+        if ( ! systSet.empty() ) {
+            tag = "_"+systSet.name()+"_";
+        }
 
         if ( m_SUSYObjTool->applySystematicVariation(systSet) != CP::SystematicCode::Ok) {
             throw std::runtime_error("Could not apply systematics "+systSet.name());
@@ -410,7 +416,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 tau->auxdecor<float>("sf") = sf;
                 tauSF *= sf;
             } else {
-                tau->auxdecor<float>("sf") = 1.;
+                tau->auxdecor<float>("sf") = 1.0;
             }
 
             out() << " tau " << tau->pt() << " " << tau->eta()
@@ -503,7 +509,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 ph->auxdecor<float>("sf") = sf;
                 phSF *= sf;
             } else {
-                ph->auxdecor<float>("sf") = 1.;
+                ph->auxdecor<float>("sf") = 1.0;
             }
             
             out() << " Photon " << ph->pt() << " " << ph->eta()
@@ -659,7 +665,7 @@ void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const {
     };
 
     const xAOD::EventInfo* eventInfo = 0;
-    if ( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) {
+    if ( !event.retrieve( eventInfo, "EventInfo").isSuccess() ) {
         throw std::runtime_error("ObjectBuilder: Could not retrieve EventInfo");
     }
 
@@ -673,7 +679,7 @@ void ObjectBuilder::fillTriggerInfo(xAOD::TEvent& event) const {
     xAOD::TStore* store = xAOD::TActiveStore::store();
     unsigned long* triggerSet = new unsigned long;
     *triggerSet =  triggers.to_ulong();
-    if ( ! store->record(triggerSet,"triggerbits").isSuccess() ) {
+    if ( !store->record(triggerSet, "triggerbits").isSuccess() ) {
         throw std::runtime_error("Could not store trigger bits");
     }
     std::cout << " trigger " << triggers << " " << *triggerSet << std::endl;

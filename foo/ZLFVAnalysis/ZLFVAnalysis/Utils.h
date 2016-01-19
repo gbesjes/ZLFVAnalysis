@@ -8,6 +8,9 @@
 #include "xAODTracking/VertexFwd.h"
 #include "xAODJet/JetContainerInfo.h"
 
+#include "xAODRootAccess/TEvent.h"
+#include "xAODTracking/Vertex.h"
+
 //--------------------------------------------------------------------------
 // Utility functions that may require access to the event store
 //--------------------------------------------------------------------------
@@ -19,6 +22,7 @@ namespace Utils {
     RunPeriod periodFromString(const std::string& period);
     DerivationTag derivationTagFromString(const std::string& tag);
     xAOD::JetInput::Type JetTypeFromString(const std::string& algname);
+    const xAOD::Vertex* GetPrimaryVertex(xAOD::TEvent& event); 
 }
 
 #endif

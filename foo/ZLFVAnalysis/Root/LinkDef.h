@@ -5,6 +5,7 @@
 #include <ZLFVAnalysis/IsData.h>
 #include <ZLFVAnalysis/ObjectBuilder.h>
 #include <ZLFVAnalysis/PileUpRWProcessor.h>
+#include <ZLFVAnalysis/Region.h>
 #include <ZLFVAnalysis/SystVariations.h>
 
 #ifdef __CINT__
@@ -24,5 +25,6 @@
 #pragma link C++ class IsData+;
 #pragma link C++ class ObjectBuilder+;
 #pragma link C++ class PileUpRWProcessor+;
+#pragma link C++ class Region+;
 #pragma link C++ class SystVariations+;
 #endif
