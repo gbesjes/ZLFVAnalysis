@@ -71,3 +71,12 @@ const Utils::EventInfo Utils::ExtractEventInfo(const xAOD::EventInfo* eventInfo,
 
     return info;
 }
+
+CP::SystematicSet* Utils::GetCurrentSystematicSet(xAOD::TEvent& event) {
+    CP::SystematicSet* currentSystematicSet = 0;
+    if ( ! store->retrieve(currentSystematicSet, "CurrentSystematicSet").isSuccess() ) {
+        throw std::runtime_error("Could not retrieve CurrentSystematicSet");
+    }
+
+    return currentSystematicSet;
+}

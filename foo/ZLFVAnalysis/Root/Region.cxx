@@ -114,9 +114,9 @@ void Region::begin() {
     }
 
     if ( m_DoSystematics ) {
-        m_counterRepository = CounterRepository("ZeroLeptonCounter"+m_stringRegion,m_IsSignal,getDirectory());
+        m_counterRepository = CounterRepository("ZLFVCounter"+m_stringRegion, m_IsSignal, getDirectory());
     } else {
-        m_counter = new Counter("ZeroLeptonCounter"+m_stringRegion,40,m_IsSignal);
+        m_counter = new Counter("ZLFVCounter"+m_stringRegion,40,m_IsSignal);
         if(m_doSmallNtuple) m_tree = bookTree(sSR);
     }
 }
@@ -124,13 +124,9 @@ void Region::begin() {
 bool Region::processEvent(xAOD::TEvent& event) {
     // access the transient store
     xAOD::TStore* store = xAOD::TActiveStore::store();
-    std::string systag = "";
+    std::string systag = ""; //TODO: better choice of variable here!!
     if ( m_DoSystematics ) {
-        CP::SystematicSet* currentSyst = 0;
-        if ( ! store->retrieve(currentSyst, "CurrentSystematicSet").isSuccess() ) {
-            throw std::runtime_error("Could not retrieve CurrentSystematicSet");
-        }
-
+        CP::SystematicSet* currentSyst = Utils::GetCurrentSystematicSet(event);
         std::string sysname = currentSyst->name();
         if (sysname != "" ) {
             systag = "_"+sysname+"_";
@@ -148,16 +144,6 @@ bool Region::processEvent(xAOD::TEvent& event) {
     // eventInfo
     const xAOD::EventInfo* eventInfo = Utils::GetEventInfo(event);
     const Utils::EventInfo _eventInfo = Utils::ExtractEventInfo(eventInfo);
-
-    /*
-    uint32_t RunNumber = eventInfo->runNumber();
-    unsigned long long EventNumber = eventInfo->eventNumber();
-    uint32_t LumiBlockNumber = eventInfo->lumiBlock();
-    uint32_t mc_channel_number = 0;
-    if ( ! m_IsData ) {
-        mc_channel_number = eventInfo->mcChannelNumber();
-    }
-    */
 
     // global event weight
     float weight = 1.f;
@@ -204,79 +190,39 @@ bool Region::processEvent(xAOD::TEvent& event) {
     // MC event veto (e.g. to remove sample phase space overlap)
     if ( ! m_IsData && (m_period == RunPeriod::p8tev || m_period == RunPeriod::p13tev) && !m_IsTruth ) {
         unsigned int* pveto = 0;
-        if ( !store->retrieve<unsigned int>(pveto,"mcVetoCode").isSuccess() ) throw std::runtime_error("could not retrieve mcVetoCode");
+        if ( !store->retrieve<unsigned int>(pveto, "mcVetoCode").isSuccess() ) {
+            throw std::runtime_error("could not retrieve mcVetoCode");
+        }
         veto = *pveto;
         bool* mcaccept = 0;
-        if ( !store->retrieve<bool>(mcaccept,"mcAccept").isSuccess() ) throw std::runtime_error("could not retrieve mcaccept");
-        if ( ! *mcaccept ) return true;
+        if ( !store->retrieve<bool>(mcaccept,"mcAccept").isSuccess() ) {
+            throw std::runtime_error("could not retrieve mcaccept");
+        }
+        if ( !*mcaccept ) {
+            return true;
+        }
     }
     m_counter->increment(weight,incr++,"Truth filter",trueTopo);
 
     // Good run list
     if ( m_IsData ) {
         bool* passGRL = 0;
-        if ( !store->retrieve<bool>(passGRL,"passGRL").isSuccess() ) throw std::runtime_error("could not retrieve passGRL");
-        if ( ! *passGRL ) return true;
+        if ( !store->retrieve<bool>(passGRL,"passGRL").isSuccess() ) {
+            throw std::runtime_error("could not retrieve passGRL");
+        }
+        if ( ! *passGRL ) {
+            return true;
+        }
     }
     m_counter->increment(weight,incr++,"GRL",trueTopo);
 
-    // HFor veto
-    // FIXME : to be implemented ... not in xAOD yet
-    m_counter->increment(weight,incr++,"hfor veto",trueTopo);
+    // REAL SELECTION HERE
 
     // Trigger selection
     if(! m_IsTruth) {
         if( !(int)eventInfo->auxdata<char>("HLT_xe70")==1) return true;
     }
     m_counter->increment(weight,incr++,"Trigger",trueTopo);
-
-    // These jets have overlap removed
-    //std::vector<JetProxy> good_jets, bad_jets, b_jets, c_jets, good_jets_recl;
-    std::vector<float> vD2;
-    if(! m_IsTruth) {
-        //m_physobjsFiller->FillJetProxies(good_jets,bad_jets,b_jets);
-        if(m_doRecl) {
-            //m_physobjsFiller->FillJetReclProxies(good_jets_recl,vD2);
-        }
-    }
-    if(m_IsTruth) {
-        //m_physobjsFillerTruth->FillJetProxies(good_jets,b_jets);
-    }
-    std::vector<float> btag_weight(7,1.); // not implemented in SUSYTools
-    std::vector<float> ctag_weight(7,1.); // not implemented in SUSYTools
-
-    // isolated_xxx have overlap removed
-    //std::vector<ElectronProxy> baseline_electrons, isolated_baseline_electrons, isolated_signal_electrons;
-    if(! m_IsTruth) {
-        //m_physobjsFiller->FillElectronProxies(baseline_electrons, isolated_baseline_electrons, isolated_signal_electrons);
-    }
-    //std::vector<ElectronTruthProxy> baseline_electrons_truth, isolated_baseline_electrons_truth, isolated_signal_electrons_truth;
-    if(m_IsTruth) {
-        //m_physobjsFillerTruth->FillElectronProxies(baseline_electrons_truth, isolated_baseline_electrons_truth, isolated_signal_electrons_truth);
-    }
-    // isolated_xxx have overlap removed
-    //std::vector<MuonProxy> baseline_muons, isolated_baseline_muons, isolated_signal_muons;
-    if(! m_IsTruth) {
-        //m_physobjsFiller->FillMuonProxies(baseline_muons, isolated_baseline_muons, isolated_signal_muons);
-    }
-    //std::vector<MuonTruthProxy> baseline_muons_truth, isolated_baseline_muons_truth, isolated_signal_muons_truth;
-    if(m_IsTruth) {
-        //m_physobjsFillerTruth->FillMuonProxies(baseline_muons_truth, isolated_baseline_muons_truth, isolated_signal_muons_truth);
-    }
-    //std::vector<TauProxy> baseline_taus, signal_taus;
-    if(! m_IsTruth) {
-        //m_physobjsFiller->FillTauProxies(baseline_taus, signal_taus);
-    }
-
-    // missing ET
-    TVector2* missingET = 0;
-    if(!m_IsTruth) {
-        if ( ! store->retrieve<TVector2>(missingET,"SUSYMET"+m_suffix+systag).isSuccess() ) throw std::runtime_error("could not retrieve SUSYMET"+m_suffix+systag);
-    }
-    if(m_IsTruth) {
-        if ( ! store->retrieve<TVector2>(missingET,"TruthMET"+m_suffix).isSuccess() ) throw std::runtime_error("could not retrieve TruthMET"+m_suffix);
-    }
-    double MissingEt = missingET->Mod();
 
     // LAr, Tile, reco problems in data
     if ( m_IsData ) {
@@ -299,9 +245,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
 
     if(m_doSmallNtuple) {
         unsigned int runnum = _eventInfo.RunNumber;
-        if ( ! m_IsData && ! m_IsTruth) runnum = _eventInfo.mc_channel_number;
-
-        std::vector<float> jetSmearSystW;
+        if ( not m_IsData && not m_IsTruth) runnum = _eventInfo.mc_channel_number;
 
         // other cleaning tests
         unsigned int cleaning = 0;
@@ -347,6 +291,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
         //m_proxyUtils.FillNTVars(m_ntv, runnum, EventNumber, LumiBlockNumber, veto, weight, normWeight, *pileupWeights, genWeight,ttbarWeightHT,ttbarWeightPt2,ttbarAvgPt,WZweight, btag_weight, ctag_weight, b_jets.size(), c_jets.size(), MissingEt, phi_met, Meff, meffincl, minDphi, RemainingminDPhi, good_jets, trueTopo, cleaning, time[0],jetSmearSystW,0, 0., 0.,dPhiBadTile,isNCBEvent,m_IsTruth,baseline_taus,signal_taus);
 
         if ( systag == ""  && !m_IsTruth ) {
+            // systag == "" is the nominal one
             std::vector<float>* p_systweights = 0;
             if ( ! store->retrieve(p_systweights,"event_weights"+m_suffix).isSuccess() ) throw std::runtime_error("Could not retrieve event_weights"+m_suffix);
             //m_ntv.systWeights = *p_systweights;
