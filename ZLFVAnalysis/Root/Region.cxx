@@ -56,8 +56,7 @@ Region::Region(const char *name)
     m_period = Utils::periodFromString(config.get("Period","p13tev"));
     if ( m_period == RunPeriod::p7tev ) {
         throw(std::domain_error("Region does not support the 7tev run period"));
-    }
-    if ( m_period == RunPeriod::INVALID ) {
+    } else if ( m_period == RunPeriod::INVALID ) {
         throw(std::domain_error("Region: invalid run period specified"));
     }
 
@@ -81,15 +80,13 @@ Region::Region(const char *name)
     //m_ZLUtils = ZeroLeptonUtils(m_IsData, m_derivationTag);
 }
 
-Region::~Region()
-{
+Region::~Region() {
     if ( !m_DoSystematics && m_counter ) delete m_counter;
     //if ( m_physobjsFiller ) delete m_physobjsFiller;
     //if ( m_physobjsFillerTruth ) delete m_physobjsFillerTruth;
 }
 
-TTree* Region::bookTree(const std::string& treename)
-{
+TTree* Region::bookTree(const std::string& treename) {
     const char* name(treename.c_str());
     TTree* tree = new TTree(name,"ZeroLepton final optimisation");
     tree->SetDirectory(getDirectory());
@@ -106,33 +103,26 @@ TTree* Region::bookTree(const std::string& treename)
 TTree* Region::getTree(const std::string& treename) {
     std::map<std::string,TTree*>::const_iterator pos = m_treeRepository.find(treename);
     if ( pos == m_treeRepository.end() ) {
-        pos = m_treeRepository.insert(std::make_pair(treename,bookTree(treename))).first;
+        pos = m_treeRepository.insert(std::make_pair(treename, bookTree(treename))).first;
     }
     return pos->second;
 }
 
-void Region::begin()
-{
+void Region::begin() {
     std::string sSR = m_stringRegion;
     if(m_doSmallNtuple) { 
-        sSR+="NT";
+        sSR += "NT";
     }
 
     if ( m_DoSystematics ) {
         m_counterRepository = CounterRepository("ZeroLeptonCounter"+m_stringRegion,m_IsSignal,getDirectory());
-    }
-    else {
+    } else {
         m_counter = new Counter("ZeroLeptonCounter"+m_stringRegion,40,m_IsSignal);
         if(m_doSmallNtuple) m_tree = bookTree(sSR);
     }
-
-    //if (  m_fillTRJigsawVars ) {    m_proxyUtils.RJigsawInit(); }
-
 }
 
-
-bool Region::processEvent(xAOD::TEvent& event)
-{
+bool Region::processEvent(xAOD::TEvent& event) {
     // access the transient store
     xAOD::TStore* store = xAOD::TActiveStore::store();
     std::string systag = "";
@@ -270,42 +260,6 @@ bool Region::processEvent(xAOD::TEvent& event)
         //m_physobjsFiller->FillTauProxies(baseline_taus, signal_taus);
     }
 
-    // Boson Tagging
-
-    std::vector<float> vReclJetMass ;
-    std::vector<float> vReclJetPt;
-    std::vector<float> vReclJetEta;
-    std::vector<float> vReclJetPhi;
-    std::vector<bool> visWtight ;
-    std::vector<bool> visWmedium ;
-    std::vector<bool> visZtight ;
-    std::vector<bool> visZmedium ;
-
-    if(m_doRecl){
-        //for ( size_t j0=0; j0<good_jets_recl.size(); j0++){
-            //vReclJetMass.push_back(good_jets_recl[j0].M());
-            //vReclJetPt.push_back(good_jets_recl[j0].Pt());
-            //vReclJetEta.push_back(good_jets_recl[j0].Eta());
-            //vReclJetPhi.push_back(good_jets_recl[j0].Phi());
-
-            //float jetpt = good_jets_recl[j0].Pt();
-            //float jetm  = good_jets_recl[j0].M();
-            //float jetD2 = vD2.at(j0);
-
-            //BosonTagging BT;
-
-            //bool isWmedium = BT.ReturnTag(1,jetpt,jetm,jetD2);
-            //bool isWtight  = BT.ReturnTag(2,jetpt,jetm,jetD2);
-            //bool isZmedium = BT.ReturnTag(3,jetpt,jetm,jetD2);
-            //bool isZtight  = BT.ReturnTag(4,jetpt,jetm,jetD2);
-
-            //visWmedium.push_back(isWmedium);
-            //visWtight.push_back(isWtight);
-            //visZmedium.push_back(isZmedium);
-            //visZtight.push_back(isZtight);
-        //}
-    }
-
     // missing ET
     TVector2* missingET = 0;
     if(!m_IsTruth){
@@ -323,13 +277,7 @@ bool Region::processEvent(xAOD::TEvent& event)
         if ( *badDetectorQuality ) return true;
     }
     m_counter->increment(weight,incr++,"Detector cleaning",trueTopo);
-
-    // MET track
-    double MET_Track = -999.;
-    double MET_Track_phi = -999.;
-    if( !m_IsTruth ){
-        //m_ZLUtils.trackMET(event, MET_Track, MET_Track_phi);
-    }
+    
     // primary vertex cut
     const xAOD::Vertex* primaryVertex = 0;
     if(! m_IsTruth){
@@ -338,157 +286,8 @@ bool Region::processEvent(xAOD::TEvent& event)
     }
     m_counter->increment(weight,incr++,"Vertex Cut",trueTopo);
 
-    // 0 lepton
-    if( !m_IsTruth ){
-        //if ( !isolated_baseline_electrons.empty() ) return true;
-        //if ( !isolated_baseline_muons.empty() ) return true;
-    }
-    if( m_IsTruth ){
-        //if ( !isolated_baseline_electrons_truth.empty() ) return true;
-        //if ( !isolated_baseline_muons_truth.empty() ) return true;
-    }
-    m_counter->increment(weight,incr++,"0 Lepton",trueTopo);
 
-
-    //if (good_jets.size()<1) return true;  
-    m_counter->increment(weight,incr++,"At least one jet",trueTopo);
-
-    // jet timing
-    std::vector<float> time;
-    //m_proxyUtils.EnergyWeightedTime(good_jets,time);
-
-    // MissingET cut
-    if( !m_IsTruth ){
-        //if (!(MissingEt > m_cutVal.m_cutEtMiss)) return true;
-    }
-    if( m_IsTruth ){
-        //if (!(MissingEt > m_cutVal.m_cutEtMissTruthTest)) return true;
-    }
-
-    m_counter->increment(weight,incr++,"MET cut",trueTopo);
-    // Leading jet Pt cut
-    //if (!(good_jets[0].Pt() > m_cutVal.m_cutJetPt0)) return true; 
-    m_counter->increment(weight,incr++,"1 jet Pt > 130 GeV Selection",trueTopo);
-
-    // leave counter to keep the cutflow sequence
-    m_counter->increment(weight,incr++,"jet Pt Selection",trueTopo);
-
-    // Calculate variables for ntuple -----------------------------------------
-    //double phi_met = TMath::ATan2(missingET->Y(),missingET->X());
-    //double minDphi = m_proxyUtils.SmallestdPhi(good_jets,phi_met);
-    //double RemainingminDPhi = m_proxyUtils.SmallestRemainingdPhi(good_jets,phi_met);
-    ////out() << " minDphi " << minDphi << " " << RemainingminDPhi << std::endl;
-    ////out() << " MissingEt " << MissingEt << std::endl;
-    ////out() << " jet Pt ";
-    ////for ( size_t i = 0; i<good_jets.size(); ++i ) out() << " " << good_jets[i].Pt();
-    ////out() << std::endl;
-    //double Meff[6];
-    //for ( size_t i = 0; i<6; ++i ) {
-        //Meff[i] = m_proxyUtils.Meff(good_jets,
-                //std::max<size_t>(1,i+1),
-                //MissingEt,
-                //m_cutVal.m_cutJetPt1,
-                //m_cutVal.m_cutJetPt4);
-        ////out() << " Meff[" << i <<"] " << Meff[i] << std::endl;
-    //}
-    //double meffincl = m_proxyUtils.Meff(good_jets,
-            //good_jets.size(),
-            //MissingEt,
-            //m_cutVal.m_cutJetPt4,
-            //m_cutVal.m_cutJetPt4);
-    //out() << " MeffInc " << meffincl << std::endl;
-
-    // ttbar reweighting not available yet in SUSYOBJDef_xAOD
-    float ttbarWeightHT = 1.;
-    float ttbarWeightPt2 = 1.;
-    float ttbarAvgPt = 0.;
-    //float HT = meffincl -  MissingEt;
-
-    // Sherpa MassiveCB W/Z reweighting : not implemented yet in SUSYOBJDef_xAOD
-    float WZweight = 1.;
-    
-    // Fill ISR variables. These vectors have for each jet > 50GeV the ISR variables in them. 
-    std::vector<size_t> isr_jet_indices;
-    std::vector<std::vector<double> > ISRvars;
-    std::vector<double> ISRvar_alpha;
-    //m_proxyUtils.GetAlphaISRVar(good_jets,MissingEt,ISRvar_alpha);
-    std::vector<double> ISRvar_minPtDistinction;
-    //m_proxyUtils.GetMinPtDistinctionISR(good_jets,ISRvar_minPtDistinction);
-    std::vector<double> ISRvar_minDeltaFraction;
-    //m_proxyUtils.GetMinDeltaFraction(good_jets,ISRvar_minDeltaFraction);
-    std::vector<double> ISRvar_minRapidityGap;
-    //m_proxyUtils.GetMinRapidityGap(good_jets,ISRvar_minRapidityGap);
-    std::vector<double> ISRvar_maxRapidityOtherJets;
-    //m_proxyUtils.GetMaxRapidityOtherJets(good_jets,ISRvar_maxRapidityOtherJets);
-    std::vector<double> ISRvar_dPhiJetMET;
-    //m_proxyUtils.GetdPhiJetMet(good_jets,phi_met,ISRvar_dPhiJetMET);
-    //m_proxyUtils.GetISRJet(good_jets,isr_jet_indices,MissingEt,phi_met,"squark",false);  
-    ISRvars.push_back(ISRvar_alpha);
-    ISRvars.push_back(ISRvar_minPtDistinction);
-    ISRvars.push_back(ISRvar_minDeltaFraction);
-    ISRvars.push_back(ISRvar_minRapidityGap);
-    ISRvars.push_back(ISRvar_maxRapidityOtherJets);
-    ISRvars.push_back(ISRvar_dPhiJetMET);
-    //std::vector<JetProxy> nonISR_jets = good_jets;
-    if (isr_jet_indices.size()==1) {
-        //nonISR_jets.erase(nonISR_jets.begin()+isr_jet_indices[0],nonISR_jets.end());
-    }
-
-
-    double mT2=-9; 
-    //if (good_jets.size()>=2) mT2 = m_proxyUtils.MT2(good_jets,*missingET);
-    double mT2_noISR=-9;
-    //if (nonISR_jets.size()>=2) mT2_noISR = m_proxyUtils.MT2(nonISR_jets,*missingET); 
-    //out() << " mT2 " << mT2 << " " << mT2_noISR << std::endl; 
-
-    std::map<TString,float> RJigsawVariables;
-    if (  m_fillTRJigsawVars ) {
-        //m_proxyUtils.CalculateRJigsawVariables(good_jets, 
-                //missingET->X(),
-                //missingET->Y(),
-                //RJigsawVariables,
-                //m_cutVal.m_cutRJigsawJetPt);
-    }
-
-
-    //Super Razor variables
-    double gaminvRp1 =-999;
-    double shatR =-999;
-    double mdeltaR =-999;
-    double cosptR =-999;
-    double Minv2 =-999;
-    double Einv =-999;
-    double  gamma_R=-999;
-    double dphi_BETA_R =-999; 
-    double dphi_leg1_leg2 =-999; 
-    double costhetaR =-999;
-    double dphi_BETA_Rp1_BETA_R=-999;
-    double gamma_Rp1=-999;
-    double Eleg1=-999;
-    double Eleg2=-999; 
-    double costhetaRp1=-999;
-
-    //m_proxyUtils.RazorVariables(good_jets, 
-            //missingET->X(),
-            //missingET->Y(),
-            //gaminvRp1 ,
-            //shatR ,
-            //mdeltaR ,
-            //cosptR ,
-            //Minv2 ,
-            //Einv ,
-            //gamma_R,
-            //dphi_BETA_R , 
-            //dphi_leg1_leg2 , 
-            //costhetaR ,
-            //dphi_BETA_Rp1_BETA_R,
-            //gamma_Rp1,
-            //Eleg1,
-            //Eleg2, 
-            //costhetaRp1);
-
-    double Sp,ST,Ap=-1;
-    //m_proxyUtils.ComputeSphericity(good_jets, Sp,ST,Ap);
+    // TODO: how do we inherit nicely here?
 
     if(m_doSmallNtuple) { 
         unsigned int runnum = RunNumber;
@@ -536,6 +335,7 @@ bool Region::processEvent(xAOD::TEvent& event)
             isNCBEvent = *NCBEventFlag;
         }
 
+        // TODO: some clever fill function here
         //m_proxyUtils.FillNTVars(m_ntv, runnum, EventNumber, LumiBlockNumber, veto, weight, normWeight, *pileupWeights, genWeight,ttbarWeightHT,ttbarWeightPt2,ttbarAvgPt,WZweight, btag_weight, ctag_weight, b_jets.size(), c_jets.size(), MissingEt, phi_met, Meff, meffincl, minDphi, RemainingminDPhi, good_jets, trueTopo, cleaning, time[0],jetSmearSystW,0, 0., 0.,dPhiBadTile,isNCBEvent,m_IsTruth,baseline_taus,signal_taus);
 
         if ( systag == ""  && !m_IsTruth ) {
@@ -547,25 +347,15 @@ bool Region::processEvent(xAOD::TEvent& event)
             if ( ! store->retrieve(p_btagSystweights,"btag_weights"+m_suffix).isSuccess() ) throw std::runtime_error("Could not retrieve btag_weights"+m_suffix);
             //m_ntv.btagSystWeights = *p_btagSystweights;
         }
-
-        //m_proxyUtils.FillNTExtraVars(m_extrantv, MET_Track, MET_Track_phi, mT2,mT2_noISR,Ap);
-
-        //if ( m_fillTRJigsawVars ) m_proxyUtils.FillNTRJigsawVars(m_rjigsawntv, RJigsawVariables );
-
-        if(!m_IsTruth && m_fillReclusteringVars)
-            //m_proxyUtils.FillNTReclusteringVars(m_RTntv,good_jets,vReclJetMass,vReclJetPt,vReclJetEta,vReclJetPhi,vD2,visWmedium, visWtight, visZmedium, visZtight);
-
         m_tree->Fill();
     }
     return true;
 }
 
-void Region::finish()
-{
+void Region::finish() {
     if ( m_DoSystematics ) {
         out() << m_counterRepository << std::endl;
-    } 
-    else {
+    } else {
         out() << *m_counter << std::endl;
     }
 }
