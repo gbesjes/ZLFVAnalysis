@@ -13,15 +13,15 @@
 // -----------------------------------------------
 
 class DetectorQuality : public cafe::Processor {
-    public:
-        DetectorQuality(const char *name);
-        bool processEvent(xAOD::TEvent& event);
+  public:
+    DetectorQuality(const char *name);
+    bool processEvent(xAOD::TEvent& event);
 
-    private:
-        RunPeriod m_period;
+  private:
+    RunPeriod m_period;
 
-    public:
-        ClassDef(DetectorQuality,0);
+  public:
+    ClassDef(DetectorQuality,0);
 };
 
-#endif 
+#endif

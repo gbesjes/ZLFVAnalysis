@@ -21,29 +21,28 @@
 #include "PATInterfaces/SystematicSet.h"
 
 Region::Region(const char *name)
-    : cafe::Processor(name), 
-    m_tree(0), 
-    m_stringRegion("SRAll"), 
-    m_doSmallNtuple(true),
-    m_fillTRJigsawVars(true),
-    m_fillReclusteringVars(true),
-    m_doRecl(false),
-    m_IsData(false),
-    m_IsTruth(false),
-    m_IsSignal(false),
-    m_DoSystematics(false),
-    m_period(RunPeriod::INVALID),
-    m_suffix(""),
-    m_suffixRecl(""),
-    //m_physobjsFiller(0),
-    //m_cutVal(),
-    //m_proxyUtils(m_IsData),
-    //m_ZLUtils(m_IsData, NotADerivation),
-    m_counter(0),
-    m_counterRepository("",false,0),
-    m_treeRepository(),
-    m_derivationTag(DerivationTag::INVALID_Derivation)
-{
+    : cafe::Processor(name),
+      m_tree(0),
+      m_stringRegion("SRAll"),
+      m_doSmallNtuple(true),
+      m_fillTRJigsawVars(true),
+      m_fillReclusteringVars(true),
+      m_doRecl(false),
+      m_IsData(false),
+      m_IsTruth(false),
+      m_IsSignal(false),
+      m_DoSystematics(false),
+      m_period(RunPeriod::INVALID),
+      m_suffix(""),
+      m_suffixRecl(""),
+      //m_physobjsFiller(0),
+      //m_cutVal(),
+      //m_proxyUtils(m_IsData),
+      //m_ZLUtils(m_IsData, NotADerivation),
+      m_counter(0),
+      m_counterRepository("",false,0),
+      m_treeRepository(),
+      m_derivationTag(DerivationTag::INVALID_Derivation) {
     cafe::Config config(name);
     m_fillTRJigsawVars = config.get("fillTRJigsawVars",true);
     m_IsData = config.get("IsData",false);
@@ -110,7 +109,7 @@ TTree* Region::getTree(const std::string& treename) {
 
 void Region::begin() {
     std::string sSR = m_stringRegion;
-    if(m_doSmallNtuple) { 
+    if(m_doSmallNtuple) {
         sSR += "NT";
     }
 
@@ -134,8 +133,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
         m_counter = m_counterRepository.counter(sysname);
         if (sysname == "" ) {
             m_tree = getTree(m_stringRegion+"NT");
-        }
-        else {
+        } else {
             m_tree = getTree(m_stringRegion+"NT_"+sysname);
             //m_physobjsFiller->setSuffix(m_suffix+systag);
         }
@@ -155,7 +153,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
 
     // get generator weight
     float genWeight = 1.f;
-    if ( !m_IsData ) { 
+    if ( !m_IsData ) {
         genWeight = eventInfo->mcEventWeight(0);
         //out() << " gen weight " << genWeight << std::endl;
         weight *= genWeight;
@@ -167,8 +165,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
         if ( !store->retrieve< std::vector<float> >(pileupWeights,"pileupWeights").isSuccess() ) throw std::runtime_error("could not retrieve pileupWeights");
         //out() << " pileup weight " << (*pileupWeights)[0] << std::endl;
         //weight *= (*pileupWeights)[0];
-    }
-    else {
+    } else {
         static std::vector<float> dummy(3,1.);
         pileupWeights = &dummy;
     }
@@ -217,7 +214,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
     m_counter->increment(weight,incr++,"hfor veto",trueTopo);
 
     // Trigger selection
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         if( !(int)eventInfo->auxdata<char>("HLT_xe70")==1) return true;
     }
     m_counter->increment(weight,incr++,"Trigger",trueTopo);
@@ -225,13 +222,13 @@ bool Region::processEvent(xAOD::TEvent& event) {
     // These jets have overlap removed
     //std::vector<JetProxy> good_jets, bad_jets, b_jets, c_jets, good_jets_recl;
     std::vector<float> vD2;
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         //m_physobjsFiller->FillJetProxies(good_jets,bad_jets,b_jets);
-        if(m_doRecl){
+        if(m_doRecl) {
             //m_physobjsFiller->FillJetReclProxies(good_jets_recl,vD2);
         }
     }
-    if(m_IsTruth){
+    if(m_IsTruth) {
         //m_physobjsFillerTruth->FillJetProxies(good_jets,b_jets);
     }
     std::vector<float> btag_weight(7,1.); // not implemented in SUSYTools
@@ -239,48 +236,48 @@ bool Region::processEvent(xAOD::TEvent& event) {
 
     // isolated_xxx have overlap removed
     //std::vector<ElectronProxy> baseline_electrons, isolated_baseline_electrons, isolated_signal_electrons;
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         //m_physobjsFiller->FillElectronProxies(baseline_electrons, isolated_baseline_electrons, isolated_signal_electrons);
     }
     //std::vector<ElectronTruthProxy> baseline_electrons_truth, isolated_baseline_electrons_truth, isolated_signal_electrons_truth;
-    if(m_IsTruth){
+    if(m_IsTruth) {
         //m_physobjsFillerTruth->FillElectronProxies(baseline_electrons_truth, isolated_baseline_electrons_truth, isolated_signal_electrons_truth);
     }
     // isolated_xxx have overlap removed
     //std::vector<MuonProxy> baseline_muons, isolated_baseline_muons, isolated_signal_muons;
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         //m_physobjsFiller->FillMuonProxies(baseline_muons, isolated_baseline_muons, isolated_signal_muons);
     }
     //std::vector<MuonTruthProxy> baseline_muons_truth, isolated_baseline_muons_truth, isolated_signal_muons_truth;
-    if(m_IsTruth){
+    if(m_IsTruth) {
         //m_physobjsFillerTruth->FillMuonProxies(baseline_muons_truth, isolated_baseline_muons_truth, isolated_signal_muons_truth);
     }
     //std::vector<TauProxy> baseline_taus, signal_taus;
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         //m_physobjsFiller->FillTauProxies(baseline_taus, signal_taus);
     }
 
     // missing ET
     TVector2* missingET = 0;
-    if(!m_IsTruth){
+    if(!m_IsTruth) {
         if ( ! store->retrieve<TVector2>(missingET,"SUSYMET"+m_suffix+systag).isSuccess() ) throw std::runtime_error("could not retrieve SUSYMET"+m_suffix+systag);
     }
-    if(m_IsTruth){
+    if(m_IsTruth) {
         if ( ! store->retrieve<TVector2>(missingET,"TruthMET"+m_suffix).isSuccess() ) throw std::runtime_error("could not retrieve TruthMET"+m_suffix);
     }
     double MissingEt = missingET->Mod();
 
     // LAr, Tile, reco problems in data
     if ( m_IsData ) {
-        bool* badDetectorQuality = 0 ; 
+        bool* badDetectorQuality = 0 ;
         if ( !store->retrieve<bool>(badDetectorQuality,"badDetectorQuality").isSuccess() ) throw std::runtime_error("could not retrieve badDetectorQuality");
         if ( *badDetectorQuality ) return true;
     }
     m_counter->increment(weight,incr++,"Detector cleaning",trueTopo);
-    
+
     // primary vertex cut
     const xAOD::Vertex* primaryVertex = 0;
-    if(! m_IsTruth){
+    if(! m_IsTruth) {
         primaryVertex = Utils::GetPrimaryVertex(event);
         if ( !primaryVertex ||  !( primaryVertex->nTrackParticles() > 2) ) return true;
     }
@@ -289,7 +286,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
 
     // TODO: how do we inherit nicely here?
 
-    if(m_doSmallNtuple) { 
+    if(m_doSmallNtuple) {
         unsigned int runnum = RunNumber;
         if ( ! m_IsData && ! m_IsTruth) runnum = mc_channel_number;
 
@@ -318,7 +315,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
         if (fabs(time[0]) > 5) cleaning += power2;
         power2 *= 2;
 
-        if(!m_IsTruth){
+        if(!m_IsTruth) {
             //bool chfTileVeto =  m_proxyUtils.chfTileVeto(good_jets);
             //if ( m_period == RunPeriod::p8tev && chfTileVeto ) cleaning += power2;
             //bool chfVeto = m_proxyUtils.chfVeto(good_jets);

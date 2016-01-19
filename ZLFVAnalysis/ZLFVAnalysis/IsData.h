@@ -8,15 +8,15 @@
 // IsData: processEvent() return true if event from data
 // -------------------------------------------------------------
 class IsData : public cafe::Processor {
-    public:
-        IsData(const char *name);
-        bool processEvent(xAOD::TEvent& event);
-    private:
-        bool m_enforce;
-        bool m_expected;
+  public:
+    IsData(const char *name);
+    bool processEvent(xAOD::TEvent& event);
+  private:
+    bool m_enforce;
+    bool m_expected;
 
-    public:
-        ClassDef(IsData,0);
+  public:
+    ClassDef(IsData,0);
 };
 
-#endif 
+#endif

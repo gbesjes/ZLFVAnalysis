@@ -49,8 +49,7 @@ ObjectBuilder::ObjectBuilder(const char *name) :
     m_derivationTag(DerivationTag::INVALID_Derivation),
     m_JESNuisanceParameterSet(0),
     m_SystInfoList(),
-    m_SystMatch()
-{
+    m_SystMatch() {
 
     cafe::Config config(name);
     m_isData = config.get("IsData", false);
@@ -65,7 +64,7 @@ ObjectBuilder::ObjectBuilder(const char *name) :
     m_photonContainerKey = config.get("PhotonContainerKey", "PhotonCollection");
     m_useSmearedJets = config.get("UseSmearedJets", false);
     m_doSystematics = config.get("DoSystematics", false);
-    if ( m_useSmearedJets && m_doSystematics ) { 
+    if ( m_useSmearedJets && m_doSystematics ) {
         throw std::logic_error("Cannot use jet smearing and systematics variations at the same time");
     }
     m_photonInOR = config.get("PhotonInOR", false);
@@ -79,19 +78,19 @@ ObjectBuilder::ObjectBuilder(const char *name) :
     }
 
     m_JESNuisanceParameterSet = config.get("JESNuisanceParameterSet", 0);
-    m_SystMatch = config.getVString("SystMatch"); 
+    m_SystMatch = config.getVString("SystMatch");
 }
 
 ObjectBuilder::~ObjectBuilder() {
     //FIXME crash in SUSYObjDef_xAOD destructor
-    if ( m_SUSYObjTool ) 
+    if ( m_SUSYObjTool )
         delete m_SUSYObjTool;
 }
 
 void  ObjectBuilder::inputFileOpened(TFile *file) {
     std::cout << "Opened input file " << file->GetName() << std::endl;
     // SUSYTools initialisation must be delayed until we have a TEvent associated
-    // with a file due to xAODConfigTool 
+    // with a file due to xAODConfigTool
     if ( !m_SUSYObjTool ) {
         initSUSYTools();
     }
@@ -124,8 +123,8 @@ void ObjectBuilder::initSUSYTools() {
        } */
 
     // Photon selection
-    if ( m_photonInOR ) { 
-        m_SUSYObjTool->setProperty("DoPhotonOR", true); 
+    if ( m_photonInOR ) {
+        m_SUSYObjTool->setProperty("DoPhotonOR", true);
     }
     m_SUSYObjTool->setProperty("PhotonIsoWP", "Cone20").ignore();
     m_SUSYObjTool->setProperty("PhotonId", "Loose").ignore();
@@ -170,13 +169,13 @@ void ObjectBuilder::initializeTauSelectionTools() {
     tauSelTool->setProperty("JetIDWP", int(TauAnalysisTools::JETIDBDTMEDIUM)).ignore();
 
     tauSelTool->setProperty(
-            "SelectionCuts",
-            (int) TauAnalysisTools::SelectionCuts(TauAnalysisTools::CutPt |
+        "SelectionCuts",
+        (int) TauAnalysisTools::SelectionCuts(TauAnalysisTools::CutPt |
                 TauAnalysisTools::CutAbsEta    |
                 TauAnalysisTools::CutAbsCharge |
                 TauAnalysisTools::CutNTrack    |
                 TauAnalysisTools::CutJetIDWP )
-            ).ignore();
+    ).ignore();
 
     tauSelTool->initialize().ignore();
     m_tauSelTool = tauSelTool;
@@ -196,7 +195,7 @@ void ObjectBuilder::initializeTauSelectionTools() {
     std::vector<CP::SystematicSet> systSetList;
     systSetList.reserve(recommendedSystematics.size()*2); // allow for continuous systematics
     systSetList.push_back(CP::SystematicSet());
-    for(const auto& syst : recommendedSystematics){
+    for(const auto& syst : recommendedSystematics) {
         systSetList.push_back(CP::SystematicSet());
         systSetList.back().insert(syst);
     }
@@ -217,22 +216,22 @@ void ObjectBuilder::initializeSystematics() {
     std::vector<ST::SystInfo> sysInfos = m_SUSYObjTool->getSystInfoList();
     if (  m_SystMatch.empty() ) {
         m_SystInfoList = sysInfos;
-        for ( const auto& sys: sysInfos){
+        for ( const auto& sys: sysInfos) {
             const CP::SystematicSet& systSet = sys.systset;
             out() << " => Will use systematic " << systSet.name() << std::endl;
         }
         return;
-    } 
+    }
 
     for ( const auto & sys : sysInfos ) {
         const CP::SystematicSet& systSet = sys.systset;
-        std::string name = systSet.name(); 
+        std::string name = systSet.name();
         bool matched = false;
         if ( name == "" ) {
             matched = true;
         } else {
             // check if name matches wildcard expression
-            for ( const auto& wildcardexp : m_SystMatch ){
+            for ( const auto& wildcardexp : m_SystMatch ) {
                 TRegexp re = TRegexp(wildcardexp.c_str(), kTRUE);
                 Ssiz_t l;
                 if ( re.Index(name,&l) >= 0 ) {
@@ -283,70 +282,70 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
     // make to use no systematics
     m_SUSYObjTool->resetSystematics();
 
-/*
-    ////////
-    // Taus
-    ////////
-    std::pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* > susytaus = std::make_pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* >(NULL,NULL);
-    const xAOD::TauJetContainer* taus = 0;
-    if (!event.retrieve(taus, m_tauContainerKey).isSuccess()){
-        throw std::runtime_error("Could not retrieve TauJetContainer");
-    }
+    /*
+        ////////
+        // Taus
+        ////////
+        std::pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* > susytaus = std::make_pair< xAOD::TauJetContainer*, xAOD::ShallowAuxContainer* >(NULL,NULL);
+        const xAOD::TauJetContainer* taus = 0;
+        if (!event.retrieve(taus, m_tauContainerKey).isSuccess()){
+            throw std::runtime_error("Could not retrieve TauJetContainer");
+        }
 
-    xAOD::TauJet::Decorator<float> dec_SFJetID("SFJetID");
-    xAOD::TauJet::Decorator<float> dec_SFJetIDStatUp("SFJetIDStatUp");
-    xAOD::TauJet::Decorator<float> dec_SFJetIDStatDown("SFJetIDStatDown");
-    xAOD::TauJet::Decorator<float> dec_SFJetIDSystUp("SFJetIDSystUp");
-    xAOD::TauJet::Decorator<float> dec_SFJetIDSystDown("SFJetIDSystDown");
+        xAOD::TauJet::Decorator<float> dec_SFJetID("SFJetID");
+        xAOD::TauJet::Decorator<float> dec_SFJetIDStatUp("SFJetIDStatUp");
+        xAOD::TauJet::Decorator<float> dec_SFJetIDStatDown("SFJetIDStatDown");
+        xAOD::TauJet::Decorator<float> dec_SFJetIDSystUp("SFJetIDSystUp");
+        xAOD::TauJet::Decorator<float> dec_SFJetIDSystDown("SFJetIDSystDown");
 
-    susytaus = xAOD::shallowCopyContainer(*taus);
-    xAOD::TauJetContainer::iterator tau_itr = susytaus.first->begin();
-    xAOD::TauJetContainer::iterator tau_end = susytaus.first->end();
+        susytaus = xAOD::shallowCopyContainer(*taus);
+        xAOD::TauJetContainer::iterator tau_itr = susytaus.first->begin();
+        xAOD::TauJetContainer::iterator tau_end = susytaus.first->end();
 
-    if ( !m_isData ) {
-        m_tauTruthMatchTool->initializeEvent();
-    }
-
-    for( ; tau_itr != tau_end; ++tau_itr ) {
         if ( !m_isData ) {
-            m_tauTruthMatchTool->getTruth( **tau_itr);
-        }
-        if ( ! m_SUSYObjTool->FillTau( **tau_itr).isSuccess() ) { 
-            throw std::runtime_error("Error in FillTau");
+            m_tauTruthMatchTool->initializeEvent();
         }
 
-        if ( !m_isData && (*tau_itr)->auxdecor<char>("baseline") == 1 ){
-            for ( const auto& syst : m_tauEffSystSetList ){
-                // one by one apply systematic variation 
-                if (m_tauEffTool->applySystematicVariation(syst) != CP::SystematicCode::Ok){
-                    throw std::runtime_error("Could not configure for systematic variation" );
-                } else {
-                    m_tauEffTool->applyEfficiencyScaleFactor( **tau_itr );
-                    std::string systName = syst.name();
-                    float sf = (float)( *tau_itr )->auxdata< double >("TauScaleFactorJetID");
-                    //std::cout<<"TauScaleFactorJetID syst:"<<systName<<" "<<sf<<std::endl;
-                    if( systName == "" )                               dec_SFJetID( **tau_itr )         = sf;
-                    else if( systName == "TAUS_EFF_JETID_STAT__1up"   ) dec_SFJetIDStatUp( **tau_itr )   = sf;
-                    else if( systName == "TAUS_EFF_JETID_STAT__1down" ) dec_SFJetIDStatDown( **tau_itr ) = sf;
-                    else if( systName == "TAUS_EFF_JETID_SYST__1up"   ) dec_SFJetIDSystUp( **tau_itr )    = sf;
-                    else if( systName == "TAUS_EFF_JETID_SYST__1down" ) dec_SFJetIDSystDown( **tau_itr )  = sf;
-                }
+        for( ; tau_itr != tau_end; ++tau_itr ) {
+            if ( !m_isData ) {
+                m_tauTruthMatchTool->getTruth( **tau_itr);
+            }
+            if ( ! m_SUSYObjTool->FillTau( **tau_itr).isSuccess() ) {
+                throw std::runtime_error("Error in FillTau");
+            }
 
-                CP::SystematicSet defaultSet;
-                if(m_tauEffTool->applySystematicVariation(defaultSet) != CP::SystematicCode::Ok){
-                    throw std::runtime_error("Could not configure TauEfficiencyCorrectionsTool for default systematic setting");
+            if ( !m_isData && (*tau_itr)->auxdecor<char>("baseline") == 1 ){
+                for ( const auto& syst : m_tauEffSystSetList ){
+                    // one by one apply systematic variation
+                    if (m_tauEffTool->applySystematicVariation(syst) != CP::SystematicCode::Ok){
+                        throw std::runtime_error("Could not configure for systematic variation" );
+                    } else {
+                        m_tauEffTool->applyEfficiencyScaleFactor( **tau_itr );
+                        std::string systName = syst.name();
+                        float sf = (float)( *tau_itr )->auxdata< double >("TauScaleFactorJetID");
+                        //std::cout<<"TauScaleFactorJetID syst:"<<systName<<" "<<sf<<std::endl;
+                        if( systName == "" )                               dec_SFJetID( **tau_itr )         = sf;
+                        else if( systName == "TAUS_EFF_JETID_STAT__1up"   ) dec_SFJetIDStatUp( **tau_itr )   = sf;
+                        else if( systName == "TAUS_EFF_JETID_STAT__1down" ) dec_SFJetIDStatDown( **tau_itr ) = sf;
+                        else if( systName == "TAUS_EFF_JETID_SYST__1up"   ) dec_SFJetIDSystUp( **tau_itr )    = sf;
+                        else if( systName == "TAUS_EFF_JETID_SYST__1down" ) dec_SFJetIDSystDown( **tau_itr )  = sf;
+                    }
+
+                    CP::SystematicSet defaultSet;
+                    if(m_tauEffTool->applySystematicVariation(defaultSet) != CP::SystematicCode::Ok){
+                        throw std::runtime_error("Could not configure TauEfficiencyCorrectionsTool for default systematic setting");
+                    }
                 }
             }
         }
-    }
 
-    if ( ! store->record(susytaus.first, "SUSYTaus"+m_suffix).isSuccess() ) {
-        throw std::runtime_error("Could not store SUSYTaus"+m_suffix);
-    }
-    if ( ! store->record(susytaus.second, "SUSYTaus"+m_suffix+"Aux.").isSuccess()) {
-        throw std::runtime_error("Could not store SUSYTaus"+m_suffix+"Aux.");
-    }
-*/
+        if ( ! store->record(susytaus.first, "SUSYTaus"+m_suffix).isSuccess() ) {
+            throw std::runtime_error("Could not store SUSYTaus"+m_suffix);
+        }
+        if ( ! store->record(susytaus.second, "SUSYTaus"+m_suffix+"Aux.").isSuccess()) {
+            throw std::runtime_error("Could not store SUSYTaus"+m_suffix+"Aux.");
+        }
+    */
 
     // loop over systematics variations
     std::vector<float>* event_weights = new std::vector<float>;
@@ -381,16 +380,16 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYJets"+m_suffix+tag+"Aux.");
             }
         }
-        
+
         out() <<  "Jets"+m_suffix+tag+" jets " << std::endl;
         for( const auto& jet: *jets) {
             out() << " jet " << jet->pt() << " " << jet->eta()
-                << " " << jet->phi() 
-                << " baseline " <<  (int) jet->auxdata<char>("baseline") 
-                << " signal " <<  (int) jet->auxdata<char>("signal") 
-                << std::endl;
+                  << " " << jet->phi()
+                  << " baseline " <<  (int) jet->auxdata<char>("baseline")
+                  << " signal " <<  (int) jet->auxdata<char>("signal")
+                  << std::endl;
         }
-        
+
         ////////
         // Taus
         ////////
@@ -407,7 +406,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYTaus"+m_suffix+tag+"Aux.");
             }
         }
-        
+
         float tauSF = 1.0;
         out() <<  "Taus"+m_suffix+tag+" taus " << std::endl;
         for ( const auto& tau : *taus ) {
@@ -420,10 +419,10 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             }
 
             out() << " tau " << tau->pt() << " " << tau->eta()
-                << " " << tau->phi() 
-                << " baseline " <<  (int) tau->auxdata<char>("baseline") 
-                << " signal " <<  (int) tau->auxdata<char>("signal") 
-                << std::endl;
+                  << " " << tau->phi()
+                  << " baseline " <<  (int) tau->auxdata<char>("baseline")
+                  << " signal " <<  (int) tau->auxdata<char>("signal")
+                  << std::endl;
         }
 
         /////////
@@ -446,16 +445,16 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         for ( const auto& mu : *muons ) {
             // declare calo and forward muons non baseline so they don't get used in MET
             if ( mu->muonType() != xAOD::Muon::Combined &&
-                    mu->muonType() != xAOD::Muon::MuonStandAlone && 
+                    mu->muonType() != xAOD::Muon::MuonStandAlone &&
                     mu->muonType() != xAOD::Muon::SegmentTagged ) {
                 mu->auxdecor<char>("baseline") = 0;
             }
-               out() << " Muon " << mu->pt() << " " << mu->eta()
-               << " " << mu->phi() 
-               << " bad " <<  (int) mu->auxdata<char>("bad") 
-               << " baseline " <<  (int) mu->auxdata<char>("baseline") 
-               << " signal " <<  (int) mu->auxdata<char>("signal") 
-               <<std::endl;
+            out() << " Muon " << mu->pt() << " " << mu->eta()
+                  << " " << mu->phi()
+                  << " bad " <<  (int) mu->auxdata<char>("bad")
+                  << " baseline " <<  (int) mu->auxdata<char>("baseline")
+                  << " signal " <<  (int) mu->auxdata<char>("signal")
+                  <<std::endl;
         }
 
         /////////////
@@ -476,12 +475,12 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         }
         out() <<  "Electrons"+m_suffix+tag+" electrons " << std::endl;
         for ( const auto& el : *electrons ) {
-               out() << " Electron " << el->pt() << " " << el->eta()
-                   << " " << el->phi() 
-                   << " baseline " <<  (int) el->auxdata<char>("baseline") 
-                   << " signal " <<  (int) el->auxdata<char>("signal") 
-                   << std::endl;
-             
+            out() << " Electron " << el->pt() << " " << el->eta()
+                  << " " << el->phi()
+                  << " baseline " <<  (int) el->auxdata<char>("baseline")
+                  << " signal " <<  (int) el->auxdata<char>("signal")
+                  << std::endl;
+
         }
 
         ///////////
@@ -500,7 +499,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
                 throw std::runtime_error("Could not store SUSYPhotons"+m_suffix+tag+"Aux.");
             }
         }
-        
+
         out() <<  "Photons"+m_suffix+tag+" photons " << std::endl;
         float phSF = 1;
         for ( const auto& ph : *photons ) {
@@ -511,14 +510,14 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
             } else {
                 ph->auxdecor<float>("sf") = 1.0;
             }
-            
+
             out() << " Photon " << ph->pt() << " " << ph->eta()
-                << " " << ph->phi() 
-                << " baseline " <<  (int) ph->auxdata<char>("baseline") 
-                << " signal " <<  (int) ph->auxdata<char>("signal") 
-                << std::endl;
+                  << " " << ph->phi()
+                  << " baseline " <<  (int) ph->auxdata<char>("baseline")
+                  << " signal " <<  (int) ph->auxdata<char>("signal")
+                  << std::endl;
         }
-        eventInfo->auxdecor<float>("phSF") = phSF ; 
+        eventInfo->auxdecor<float>("phSF") = phSF ;
 
         // Overlap removal
         if ( m_photonInOR ) {
@@ -536,14 +535,14 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         if ( !m_isData ) {
             muSF = (float) m_SUSYObjTool->GetTotalMuonSF(*muons, true, true, "HLT_mu20_iloose_L1MU15_OR_HLT_mu50");
         }
-        eventInfo->auxdecor<float>("muSF") = muSF ; 
+        eventInfo->auxdecor<float>("muSF") = muSF ;
 
         // idem for GetTotalElectronSF
         float elSF = 1.f;
         if ( !m_isData ) {
             elSF = (float) m_SUSYObjTool->GetTotalElectronSF(*electrons);
         }
-        eventInfo->auxdecor<float>("elSF") = elSF ; 
+        eventInfo->auxdecor<float>("elSF") = elSF ;
 
         xAOD::MissingETContainer* rebuiltMET = new xAOD::MissingETContainer();
         xAOD::MissingETAuxContainer* rebuiltMET_aux = new xAOD::MissingETAuxContainer();
@@ -563,7 +562,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
 
         // Do we have a rebuilt MET?
         xAOD::MissingETContainer::const_iterator met_it = rebuiltMET->find("Final");
-        if ( met_it == rebuiltMET->end() ) { 
+        if ( met_it == rebuiltMET->end() ) {
             throw std::runtime_error("Could not find Final MET after running  GetMET");
         }
 
@@ -577,7 +576,7 @@ bool ObjectBuilder::processEvent(xAOD::TEvent& event) {
         if ( sys.affectsKinematics || systSet.name() == "" ) {
             sys_variations_kinematics->push_back(systSet);
         }
-        
+
         if ( sys.affectsWeights || systSet.name() == "" ) {
             event_weights->push_back(elSF * phSF * muSF * tauSF);
             event_weights_names->push_back(systSet.name());

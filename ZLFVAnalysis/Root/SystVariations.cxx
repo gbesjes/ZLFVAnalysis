@@ -17,8 +17,8 @@
 
 #include <stdexcept>
 
-SystVariations::SystVariations(const char *name): 
-    cafe::Processor(name), 
+SystVariations::SystVariations(const char *name):
+    cafe::Processor(name),
     m_counter(0),
     m_processors() {
     cafe::Config config(name);
@@ -38,17 +38,17 @@ void SystVariations::begin() {
         throw std::runtime_error("No root TDirectory defined in processor SR("+this->name()+")");
     }
 
-    m_counter = new Counter("SystVariationsCounter", 40); 
+    m_counter = new Counter("SystVariationsCounter", 40);
 
     std::for_each(m_processors.begin(),m_processors.end(),
-            std::mem_fun(&Processor::begin));
+                  std::mem_fun(&Processor::begin));
 }
 
 SystVariations::~SystVariations() {
     if ( m_counter ) {
         delete m_counter;
     }
-    
+
     // TODO: C++14
     for ( std::list<Processor*>::iterator it = m_processors.begin();
             it != m_processors.end();
@@ -77,7 +77,7 @@ bool SystVariations::processEvent(xAOD::TEvent& event) {
         throw std::runtime_error("Could not retrieve sys_variations_kinematics");
     }
 
-    for ( const auto& iSyst : *sys_variations){
+    for ( const auto& iSyst : *sys_variations) {
         *currentSyst = iSyst;
         //out() << " processing systematics " << currentSyst->name() << std::endl;
         for(std::list<cafe::Processor*>::iterator it = m_processors.begin();
@@ -93,7 +93,7 @@ bool SystVariations::processEvent(xAOD::TEvent& event) {
 
 void SystVariations::finish() {
     std::for_each(m_processors.begin(),m_processors.end(),
-            std::mem_fun(&Processor::finish));
+                  std::mem_fun(&Processor::finish));
     out() << *m_counter << std::endl;
 }
 

@@ -20,14 +20,14 @@
 #include <fstream>
 #include <sstream>
 
-Bookkeeper::Bookkeeper(const char *name) : 
+Bookkeeper::Bookkeeper(const char *name) :
     cafe::Processor(name), m_name(name), m_counter(0), m_fileInfos(0), m_eventCounter(0),
     m_derivationTag(DerivationTag::INVALID_Derivation), m_isData(false), _directory(0) {
-    
+
     cafe::Config config(name);
     m_isData = config.get("IsData", false);
     m_derivationTag = Utils::derivationTagFromString(config.get("DerivationTag","xxxx"));
-    if ( m_derivationTag == DerivationTag::INVALID_Derivation ) { 
+    if ( m_derivationTag == DerivationTag::INVALID_Derivation ) {
         throw(std::domain_error("Bookkeeper: invalid derivation tag specified"));
     }
 
@@ -41,7 +41,7 @@ void Bookkeeper::openPoolFileCatalog() {
         std::cerr << "Could not open text PoolFileCatalog pfc.txt" << std::endl;
         return;
     }
-    
+
     std::string fname, guid;
     while ( true ) {
         pfcfile >> fname;
@@ -75,10 +75,10 @@ void Bookkeeper::inputFileOpened(TFile *file) {
         std::cout << " Derivation bookeeping temporarily switched off for real data due to bugs in event processing " << std::endl;
         return;
     }
-    if ( m_derivationTag == DerivationTag::p2353 || m_derivationTag == DerivationTag::p2363 || 
+    if ( m_derivationTag == DerivationTag::p2353 || m_derivationTag == DerivationTag::p2363 ||
             m_derivationTag == DerivationTag::p2372 || m_derivationTag == DerivationTag::p2375 ||
             m_derivationTag == DerivationTag::p2377 || m_derivationTag == DerivationTag::p2384 ||
-            m_derivationTag == DerivationTag::p2419 || m_derivationTag == DerivationTag::p2425 ) {    
+            m_derivationTag == DerivationTag::p2419 || m_derivationTag == DerivationTag::p2425 ) {
 
         // extract information from CutBookkeeperContainer in Metadata
         // https://twiki.cern.ch/twiki/bin/view/AtlasProtected/AnalysisMetadata
@@ -86,33 +86,33 @@ void Bookkeeper::inputFileOpened(TFile *file) {
         if ( !event ) {
             throw std::logic_error("Bookkeeper: could not get active TEvent !");
         }
-        
+
         const xAOD::CutBookkeeperContainer* incompleteCBC = 0;
         if ( !event->retrieveMetaInput(incompleteCBC, "IncompleteCutBookkeepers").isSuccess()) {
             throw std::logic_error("Bookkeeper: could not retrieve CutBookkeeperContainer with tag IncompleteCutBookkeepers");
         }
-        
+
         if ( incompleteCBC->size() != 0 ) {
             throw std::logic_error("Bookkeeper: IncompleteCutBookkeepers not empty");
         }
-        
+
         const xAOD::CutBookkeeperContainer* completeCBC = 0;
-        if ( !event->retrieveMetaInput(completeCBC, "CutBookkeepers").isSuccess()) { 
+        if ( !event->retrieveMetaInput(completeCBC, "CutBookkeepers").isSuccess()) {
             throw std::logic_error("Bookkeeper: could not retrieve CutBookkeeperContainer with tag CutBookkeepers");
         }
-        
+
         // Find the smallest cycle number, the original first processing step/cycle
         int minCycle = 10000;
         for ( auto cbk : *completeCBC ) {
-            if ( ! cbk->name().empty()  && minCycle > cbk->cycle() ){ 
-                minCycle = cbk->cycle(); 
+            if ( ! cbk->name().empty()  && minCycle > cbk->cycle() ) {
+                minCycle = cbk->cycle();
             }
         }
 
         // Now, find the right one that contains all the needed info...
         const xAOD::CutBookkeeper* allEventsCBK=0;
         for ( auto cbk : *completeCBC ) {
-            if ( minCycle == cbk->cycle() && cbk->name() == "AllExecutedEvents" ){
+            if ( minCycle == cbk->cycle() && cbk->name() == "AllExecutedEvents" ) {
                 allEventsCBK = cbk;
                 break;
             }
@@ -120,7 +120,7 @@ void Bookkeeper::inputFileOpened(TFile *file) {
 
         uint64_t nEventsProcessed  = allEventsCBK->nAcceptedEvents();
         double sumOfWeights        = allEventsCBK->sumOfEventWeights();
-        //double sumOfWeightsSquared = allEventsCBK->sumOfEventWeightsSquared(); 
+        //double sumOfWeightsSquared = allEventsCBK->sumOfEventWeightsSquared();
 
         std::cout << "Derivation file : " << file->GetName() << " nprocessed " <<  nEventsProcessed << " sumW " << sumOfWeights << std::endl;
 
@@ -142,10 +142,9 @@ bool Bookkeeper::processEvent(xAOD::TEvent& event) {
         const xAOD::EventInfo* eventInfo = 0;
         if ( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) throw std::runtime_error("Could not retrieve EventInfo");
 
-        if(eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ){
+        if(eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ) {
             m_counter->Fill(1.1, eventInfo->mcEventWeight(0));
-        }
-        else {
+        } else {
             m_counter->Fill(1.1, 1.);
         }
     }
@@ -154,15 +153,15 @@ bool Bookkeeper::processEvent(xAOD::TEvent& event) {
 
 void Bookkeeper::finish() {
     std::cout << "Files processed: " << std::endl;
-    for ( std::size_t i = 0; i < m_closedFiles.size(); ++i ){
+    for ( std::size_t i = 0; i < m_closedFiles.size(); ++i ) {
         std::string guid("UNKNOWN-GUID");
         std::string logicalName =  m_closedFiles[i];
-        // has to cover files like 
+        // has to cover files like
         // root://atlas-xrd-central.usatlas.org:1094//atlas/rucio/mc14_8TeV:AOD.01507240._010001.pool.root.2
         // which has a full path and a ":" in the basename
         std::size_t pos = logicalName.rfind("/");
         if ( pos != std::string::npos ) logicalName = logicalName.substr(pos+1);
-        pos = logicalName.rfind(":"); // ruci has 
+        pos = logicalName.rfind(":"); // ruci has
         if ( pos != std::string::npos ) logicalName = logicalName.substr(pos+1);
 
         std::map<std::string, std::string>::const_iterator it = m_fileCatalog.find(logicalName);

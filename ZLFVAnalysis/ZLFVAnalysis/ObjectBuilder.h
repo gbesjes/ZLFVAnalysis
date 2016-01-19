@@ -28,50 +28,50 @@
 // a loop on smeared iterations from an event.
 //---------------------------------------------------------------------
 class ObjectBuilder : public cafe::Processor {
-    public:
-        ObjectBuilder(const char *name);
-        ~ObjectBuilder();
-        bool processEvent(xAOD::TEvent& event);
-        void inputFileOpened(TFile *file);
+  public:
+    ObjectBuilder(const char *name);
+    ~ObjectBuilder();
+    bool processEvent(xAOD::TEvent& event);
+    void inputFileOpened(TFile *file);
 
-    private:
-        void initSUSYTools();
-        void fillTriggerInfo(xAOD::TEvent& event) const;
+  private:
+    void initSUSYTools();
+    void fillTriggerInfo(xAOD::TEvent& event) const;
 
-        void initializeTauSelectionTools();
-        void initializeSystematics();
-        void initializeNoSystematics();
+    void initializeTauSelectionTools();
+    void initializeSystematics();
+    void initializeNoSystematics();
 
-        ST::SUSYObjDef_xAOD* m_SUSYObjTool;
-        
-        bool m_isData;
-        bool m_is25ns;
-        bool m_isAtlfast;
-        bool m_useSmearedJets;
-        bool m_doSystematics;
-        bool m_photonInOR;
+    ST::SUSYObjDef_xAOD* m_SUSYObjTool;
 
-        ToolHandle<TauAnalysisTools::ITauSelectionTool> m_tauSelTool;
-        ToolHandle<TauAnalysisTools::ITauEfficiencyCorrectionsTool> m_tauEffTool;
-        ToolHandle<TauAnalysisTools::ITauTruthMatchingTool> m_tauTruthMatchTool;
-        std::vector<CP::SystematicSet> m_tauEffSystSetList;
+    bool m_isData;
+    bool m_is25ns;
+    bool m_isAtlfast;
+    bool m_useSmearedJets;
+    bool m_doSystematics;
+    bool m_photonInOR;
 
-        std::string m_electronContainerKey; 
-        std::string m_photonContainerKey; 
-        std::string m_jetContainerKey; 
-        std::string m_tauContainerKey; 
-        std::string m_suffix;
-        std::string m_suffixRecl;
-        //ZeroLeptonRunPeriod m_period;
-        DerivationTag m_derivationTag;
-        int m_JESNuisanceParameterSet;
+    ToolHandle<TauAnalysisTools::ITauSelectionTool> m_tauSelTool;
+    ToolHandle<TauAnalysisTools::ITauEfficiencyCorrectionsTool> m_tauEffTool;
+    ToolHandle<TauAnalysisTools::ITauTruthMatchingTool> m_tauTruthMatchTool;
+    std::vector<CP::SystematicSet> m_tauEffSystSetList;
 
-        std::vector<ST::SystInfo> m_SystInfoList;
-        std::vector<std::string> m_SystMatch;
+    std::string m_electronContainerKey;
+    std::string m_photonContainerKey;
+    std::string m_jetContainerKey;
+    std::string m_tauContainerKey;
+    std::string m_suffix;
+    std::string m_suffixRecl;
+    //ZeroLeptonRunPeriod m_period;
+    DerivationTag m_derivationTag;
+    int m_JESNuisanceParameterSet;
 
-    public:
-        ClassDef(ObjectBuilder,0);
+    std::vector<ST::SystInfo> m_SystInfoList;
+    std::vector<std::string> m_SystMatch;
+
+  public:
+    ClassDef(ObjectBuilder,0);
 };
 
-#endif 
+#endif
 

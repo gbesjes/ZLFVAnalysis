@@ -23,11 +23,11 @@ DerivationTag Utils::derivationTagFromString(const std::string& tag) {
 }
 
 xAOD::JetInput::Type Utils::JetTypeFromString(const std::string& algname) {
-    if ( algname.find(xAOD::JetInput::typeName(xAOD::JetInput::LCTopo)) != std::string::npos ) { 
+    if ( algname.find(xAOD::JetInput::typeName(xAOD::JetInput::LCTopo)) != std::string::npos ) {
         return xAOD::JetInput::LCTopo;
     }
-    
-    if ( algname.find(xAOD::JetInput::typeName(xAOD::JetInput::EMTopo)) != std::string::npos ) { 
+
+    if ( algname.find(xAOD::JetInput::typeName(xAOD::JetInput::EMTopo)) != std::string::npos ) {
         return xAOD::JetInput::EMTopo;
     }
 
@@ -39,12 +39,12 @@ const xAOD::Vertex* Utils::GetPrimaryVertex(xAOD::TEvent& event) {
     if (!event.retrieve( vertices, "PrimaryVertices" ).isSuccess() ) {
         return nullptr;
     }
-    
+
     for ( const auto& vx: *vertices ) {
-        if(vx->vertexType() == xAOD::VxType::PriVtx) { 
+        if(vx->vertexType() == xAOD::VxType::PriVtx) {
             return vx;
         }
     }
-    
+
     return NULL;
 }

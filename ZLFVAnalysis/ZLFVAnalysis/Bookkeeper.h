@@ -18,39 +18,41 @@
 #include "ZLFVAnalysis/Utils.h"
 
 class Bookkeeper : public cafe::Processor {
-    public:
-        Bookkeeper(const char *name);
-        void begin();
-        void inputFileOpened(TFile *file);
-        void inputFileClosing(TFile *file);
-        bool processEvent(xAOD::TEvent& event);
-        void finish();
+  public:
+    Bookkeeper(const char *name);
+    void begin();
+    void inputFileOpened(TFile *file);
+    void inputFileClosing(TFile *file);
+    bool processEvent(xAOD::TEvent& event);
+    void finish();
 
-        std::string name() { return m_name; }
+    std::string name() {
+        return m_name;
+    }
 
-        TDirectory* getDirectory() const {
-            return _directory  ? _directory : _directory = gROOT;
-        }
+    TDirectory* getDirectory() const {
+        return _directory  ? _directory : _directory = gROOT;
+    }
 
-    private:
-        void openPoolFileCatalog();
+  private:
+    void openPoolFileCatalog();
 
-        const char *m_name;
-        TH1D* m_counter;
-        TObjArray* m_fileInfos;
-        unsigned int m_eventCounter;
-        std::vector<unsigned int> m_eventsPerFile;
-        std::vector<std::string> m_openedFiles;
-        std::vector<std::string> m_closedFiles;
-        std::map<std::string, std::string> m_fileCatalog;
+    const char *m_name;
+    TH1D* m_counter;
+    TObjArray* m_fileInfos;
+    unsigned int m_eventCounter;
+    std::vector<unsigned int> m_eventsPerFile;
+    std::vector<std::string> m_openedFiles;
+    std::vector<std::string> m_closedFiles;
+    std::map<std::string, std::string> m_fileCatalog;
 
-        DerivationTag m_derivationTag;
-        bool m_isData;
-        
-        mutable TDirectory *_directory;
+    DerivationTag m_derivationTag;
+    bool m_isData;
 
-    public:
-        ClassDef(Bookkeeper,0);
+    mutable TDirectory *_directory;
+
+  public:
+    ClassDef(Bookkeeper,0);
 };
 
-#endif 
+#endif
