@@ -127,9 +127,15 @@ bool Region::processEvent(xAOD::TEvent& event) {
     std::string systag = "";
     if ( m_DoSystematics ) {
         CP::SystematicSet* currentSyst = 0;
-        if ( ! store->retrieve(currentSyst, "CurrentSystematicSet").isSuccess() ) throw std::runtime_error("Could not retrieve CurrentSystematicSet");
+        if ( ! store->retrieve(currentSyst, "CurrentSystematicSet").isSuccess() ) {
+            throw std::runtime_error("Could not retrieve CurrentSystematicSet");
+        }
+
         std::string sysname = currentSyst->name();
-        if (sysname != "" ) systag = "_"+sysname+"_";
+        if (sysname != "" ) {
+            systag = "_"+sysname+"_";
+        }
+
         m_counter = m_counterRepository.counter(sysname);
         if (sysname == "" ) {
             m_tree = getTree(m_stringRegion+"NT");
@@ -140,13 +146,18 @@ bool Region::processEvent(xAOD::TEvent& event) {
     }
 
     // eventInfo
-    const xAOD::EventInfo* eventInfo = 0;
-    if ( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) throw std::runtime_error("Could not retrieve EventInfo");
+    const xAOD::EventInfo* eventInfo = Utils::GetEventInfo(event);
+    const Utils::EventInfo _eventInfo = Utils::ExtractEventInfo(eventInfo);
+
+    /*
     uint32_t RunNumber = eventInfo->runNumber();
     unsigned long long EventNumber = eventInfo->eventNumber();
     uint32_t LumiBlockNumber = eventInfo->lumiBlock();
     uint32_t mc_channel_number = 0;
-    if ( ! m_IsData ) mc_channel_number = eventInfo->mcChannelNumber();
+    if ( ! m_IsData ) {
+        mc_channel_number = eventInfo->mcChannelNumber();
+    }
+    */
 
     // global event weight
     float weight = 1.f;
@@ -287,8 +298,8 @@ bool Region::processEvent(xAOD::TEvent& event) {
     // TODO: how do we inherit nicely here?
 
     if(m_doSmallNtuple) {
-        unsigned int runnum = RunNumber;
-        if ( ! m_IsData && ! m_IsTruth) runnum = mc_channel_number;
+        unsigned int runnum = _eventInfo.RunNumber;
+        if ( ! m_IsData && ! m_IsTruth) runnum = _eventInfo.mc_channel_number;
 
         std::vector<float> jetSmearSystW;
 
@@ -312,7 +323,7 @@ bool Region::processEvent(xAOD::TEvent& event) {
         power2 *= 2;
 
         // average timing of 2 leading jets
-        if (fabs(time[0]) > 5) cleaning += power2;
+        //if (fabs(time[0]) > 5) cleaning += power2;
         power2 *= 2;
 
         if(!m_IsTruth) {

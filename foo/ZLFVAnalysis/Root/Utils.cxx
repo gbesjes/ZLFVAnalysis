@@ -46,5 +46,28 @@ const xAOD::Vertex* Utils::GetPrimaryVertex(xAOD::TEvent& event) {
         }
     }
 
-    return NULL;
+    return nullptr;
+}
+
+const xAOD::EventInfo* Utils::GetEventInfo(xAOD::TEvent& event) {
+    const xAOD::EventInfo* eventInfo = 0;
+    if ( ! event.retrieve( eventInfo, "EventInfo").isSuccess() ) {
+        throw std::runtime_error("Could not retrieve EventInfo");
+    }
+
+    return eventInfo;
+}
+
+const Utils::EventInfo Utils::ExtractEventInfo(const xAOD::EventInfo* eventInfo, bool isData) {
+    EventInfo info;
+
+    info.RunNumber = eventInfo->runNumber();
+    info.EventNumber = eventInfo->eventNumber();
+    info.LumiBlockNumber = eventInfo->lumiBlock();
+    info.mc_channel_number = 0;
+    if ( not isData ) {
+        info.mc_channel_number = eventInfo->mcChannelNumber();
+    }
+
+    return info;
 }
