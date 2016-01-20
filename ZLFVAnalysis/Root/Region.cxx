@@ -121,6 +121,10 @@ void Region::begin() {
     }
 }
 
+//void Region::initializeTree() {
+
+//}
+
 bool Region::processEvent(xAOD::TEvent& event) {
     // access the transient store
     xAOD::TStore* store = xAOD::TActiveStore::store();
@@ -128,14 +132,12 @@ bool Region::processEvent(xAOD::TEvent& event) {
     if ( m_DoSystematics ) {
         CP::SystematicSet* currentSyst = Utils::GetCurrentSystematicSet(event);
         std::string sysname = currentSyst->name();
-        if (sysname != "" ) {
-            systag = "_"+sysname+"_";
-        }
-
         m_counter = m_counterRepository.counter(sysname);
+        
         if (sysname == "" ) {
             m_tree = getTree(m_stringRegion+"NT");
         } else {
+            systag = "_"+sysname+"_";
             m_tree = getTree(m_stringRegion+"NT_"+sysname);
             //m_physobjsFiller->setSuffix(m_suffix+systag);
         }

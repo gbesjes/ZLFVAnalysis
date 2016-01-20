@@ -10,7 +10,10 @@
 
 #include "xAODEventInfo/EventInfo.h"
 #include "xAODRootAccess/TEvent.h"
+#include "xAODRootAccess/TStore.h"
+#include "xAODRootAccess/TActiveStore.h"
 #include "xAODTracking/Vertex.h"
+#include "PATInterfaces/SystematicSet.h"
 
 //--------------------------------------------------------------------------
 // Utility functions that may require access to the event store
