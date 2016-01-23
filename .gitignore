@@ -1,0 +1,13 @@
+.*.swp
+RootCoreBin
+.RootCoreBin
+extra_packages.rc
+rcSetup.*
+JetUncertainties/
+MuonEfficiencyCorrections/
+SUSYTools/
+TauAnalysisTools
+cafe/
+output*.root
+*.pool.root*
+*.orig
